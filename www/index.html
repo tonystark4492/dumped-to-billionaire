@@ -26,9 +26,9 @@ button{font:inherit}.bt button,.m button{padding:8px 12px;border-radius:10px;bor
 #modal div{background:#fffbe6;border:4px solid #2b2d42;border-radius:20px;padding:18px;max-width:380px;text-align:center;color:#2b2d42}
 #modal h2{margin:0 0 8px}#modal button{margin-top:12px;padding:12px 20px;border-radius:14px;border:3px solid #2b2d42;background:#ffd43b;font-weight:900;font-size:16px}
 </style></head><body>
-<div id="hud"><div class="chip" id="money"></div><div class="chip" id="stars"></div><div id="alert"></div></div>
+<div id="hud"><div class="chip" id="money"></div><div class="chip" id="stars"></div><div class="chip" id="sn"></div><div id="alert"></div></div>
 <div id="panel"></div><div id="toast"></div>
-<div id="tabs"><button data-t="stock">📦 Stock</button><button data-t="price">💲 Prices</button><button data-t="up">⬆️ Upgrades</button><button data-t="menu">⚙️ Menu</button></div>
+<div id="tabs"><button data-t="stock">📦 Stock</button><button data-t="price">💲 Prices</button><button data-t="up">⬆️ Upgrades</button><button data-t="stores">🏬 Stores</button><button data-t="menu">⚙️ Menu</button></div>
 <div id="modal"><div id="mbox"></div></div>
 <script type="module">
 let THREE;
@@ -37,51 +37,58 @@ const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s),fm=n=
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 /* ---------- DATA ---------- */
 const KEY='dtb_save_v1';
-const P=[{id:'case',n:'Phone Case',e:'📱',cost:4,ref:8,c:0xff5d8f},{id:'buds',n:'Earbuds',e:'🎧',cost:15,ref:28,c:0x4dabf7},{id:'chg',n:'Fast Charger',e:'🔌',cost:10,ref:20,c:0xffd43b},{id:'pwr',n:'Power Bank',e:'🔋',cost:18,ref:34,c:0x51cf66},{id:'wat',n:'Smart Watch',e:'⌚',cost:40,ref:75,c:0xb197fc},{id:'spk',n:'Speaker',e:'🔊',cost:30,ref:55,c:0xff922b},{id:'pad',n:'Game Controller',e:'🎮',cost:45,ref:85,c:0x22b8cf},{id:'tab',n:'Tablet',e:'📲',cost:120,ref:210,c:0xf06595}];
-const cnt=()=>[3,6,8][S.up.range||0];
-const UP=[{k:'shelf',n:'📚 Bigger Shelves',d:'+10 max stock per product',base:150,mul:1.8,max:5},
-{k:'decor',n:'🪴 Decorations',d:'More visitors and customers accept higher prices',base:200,mul:2,max:5},
-{k:'counter',n:'⚡ Faster Checkout',d:'Customers get served quicker',base:120,mul:1.8,max:5},
-{k:'cashier',n:'🧑‍💼 Hire Cashier',d:'Checkout works without you at the counter (offline earnings x2)',base:250,mul:1,max:1}];
-UP.push({k:'range',n:'🛍️ New Product Range',d:'Unlocks new shelves with new products (2 levels)',base:400,mul:3.75,max:2});
-function fresh(){const s={money:500,rep:1,sold:0,rev:0,profit:0,up:{shelf:0,decor:0,counter:0,cashier:0,range:0},prod:{},t:Date.now(),intro:0};P.forEach((p,i)=>s.prod[p.id]={stock:i<3?5:0,price:p.ref});return s}
-function valid(j){return j&&typeof j.money=='number'&&j.prod&&j.up&&P.slice(0,3).every(p=>j.prod[p.id]&&typeof j.prod[p.id].stock=='number')}
+const mk=a=>a.map(([id,n,e,cost,ref,c])=>({id,n,e,cost,ref,c}));
+const TECH=mk([['case','Phone Case','📱',4,8,0xff5d8f],['grd','Screen Guard','🛡️',3,6,0x74c0fc],['buds','Earbuds','🎧',15,28,0x4dabf7],['chg','Fast Charger','🔌',10,20,0xffd43b],['cbl','USB Cable','🔗',3,6,0xadb5bd],['pwr','Power Bank','🔋',18,34,0x51cf66],
+['mse','Wireless Mouse','🖱️',14,26,0x9775fa],['kbd','Keyboard','⌨️',25,45,0x868e96],['spk','Speaker','🔊',30,55,0xff922b],['wat','Smart Watch','⌚',40,75,0xb197fc],['cam','Webcam','📷',28,50,0x20c997],['ssd','SSD Drive','💾',55,95,0x339af0],
+['pad','Game Controller','🎮',45,85,0x22b8cf],['vr','VR Headset','🥽',150,260,0xe64980],['tab','Tablet','📲',120,210,0xf06595],['drn','Drone','🚁',200,340,0xfa5252]]);
+const PETS=mk([['toy','Chew Toy','🧸',5,10,0xff8787],['sed','Bird Seed','🌾',6,11,0xe9c46a],['dfd','Dog Food','🦴',12,22,0xc68b59],['cfd','Cat Food','🐟',10,18,0x4dabf7],['bwl','Pet Bowl','🥣',7,13,0xff6b6b],['whl','Hamster Wheel','🎡',12,22,0x69db7c],
+['ham','Hamster','🐹',25,45,0xffc078],['bud','Budgie','🐦',40,70,0x38d9a9],['cbd','Cat Bed','🛏️',30,55,0xda77f2],['dbd','Dog Bed','🛌',35,62,0x91a7ff],['bcg','Bird Cage','🏠',35,60,0xfcc419],['lsh','Dog Leash','🦮',15,28,0xff922b],
+['par','Parrot','🦜',120,210,0xff6b6b],['kit','Kitten','🐱',130,230,0xadb5bd],['pup','Puppy','🐶',160,280,0xd9a066],['rab','Rabbit','🐰',90,160,0xf8f9fa]]);
+const STORES=[{n:'Tech Shack',P:TECH,wall:[0xffb3c7,0xffd6a5],fl:0xf6e0b5,rug:0xe63946,ox:0,sg:'TECH SHACK',sc:'#ffe066',cost:0},{n:'Pet Paradise',P:PETS,wall:[0xa5d8ff,0xb2f2bb],fl:0xfff3bf,rug:0x4263eb,ox:28,sg:'PET PARADISE',sc:'#b2f2bb',cost:2500}];
+const ALL=[...TECH,...PETS];
+function fresh(){const s={money:500,rep:1,sold:0,rev:0,profit:0,up:{shelf:0,decor:0,counter:0,cashier:0,r:[0,0]},own:[1,0],prod:{},t:Date.now(),intro:0};ALL.forEach(p=>s.prod[p.id]={stock:TECH.indexOf(p)>=0&&TECH.indexOf(p)<6?5:0,price:p.ref});return s}
+function valid(j){return j&&typeof j.money=='number'&&j.prod&&j.up&&j.prod.case}
 let S;try{const j=JSON.parse(localStorage.getItem(KEY));S=valid(j)?Object.assign(fresh(),j):fresh()}catch(e){S=fresh()}
-function fix(){S.up=Object.assign({shelf:0,decor:0,counter:0,cashier:0,range:0},S.up);P.forEach(p=>S.prod[p.id]||(S.prod[p.id]={stock:0,price:p.ref}))}fix();
+function fix(){const u=S.up;S.up=Object.assign({shelf:0,decor:0,counter:0,cashier:0},u);S.up.r=Array.isArray(u.r)?u.r:[u.range||0,0];S.own=Array.isArray(S.own)?S.own:[1,0];ALL.forEach(p=>S.prod[p.id]||(S.prod[p.id]={stock:0,price:p.ref}))}fix();
 function save(){S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-const mx=()=>20+10*S.up.shelf, spawnEvery=()=>4/(S.rep*(1+.15*S.up.decor)), coTime=()=>2.2/(1+.3*S.up.counter);
+let cur=0;
+const mx=()=>20+10*S.up.shelf,spawnEvery=()=>4/(S.rep*(1+.15*S.up.decor)),coTime=()=>2.2/(1+.3*S.up.counter),cnt=s=>[6,12,16][S.up.r[s]||0],PL=s=>STORES[s].P.slice(0,cnt(s));
 function dem(p){const d=1+.06*S.up.decor,lo=.75*d,hi=1.5*d;return clamp((hi-S.prod[p.id].price/p.ref)/(hi-lo),0,1)}
 function sale(p){const ps=S.prod[p.id];ps.stock--;S.money+=ps.price;S.rev+=ps.price;S.profit+=ps.price-p.cost;S.sold++;S.rep=Math.min(3,S.rep+.01);return ps.price}
 /* ---------- 3D SCENE ---------- */
 const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));document.body.prepend(ren.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9be7ff);
-const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,100),TG=new THREE.Vector3(0,-1.5,.5);
-cam.position.copy(TG).add(new THREE.Vector3(14,13,14));cam.lookAt(TG);
+const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,100),TG=new THREE.Vector3(0,-1.5,.5);let TGx=0;
 function size(){const w=innerWidth,h=innerHeight,a=w/h,hh=a<1?8.5/a:8.5;cam.left=-hh*a;cam.right=hh*a;cam.top=hh;cam.bottom=-hh;cam.updateProjectionMatrix();ren.setSize(w,h)}
 size();addEventListener('resize',size);
 scene.add(new THREE.HemisphereLight(0xffffff,0xb0c4de,.95));const dl=new THREE.DirectionalLight(0xffffff,.7);dl.position.set(5,10,7);scene.add(dl);
 const M={},mat=c=>M[c]||(M[c]=new THREE.MeshLambertMaterial({color:c}));
 function box(w,h,d,c,x,y,z,par=scene){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);par.add(m);return m}
-box(60,.2,60,0x7ed957,0,-.3,0);box(60,.1,5,0x6c757d,0,-.2,10.5);
-box(10,.2,8,0xf6e0b5,0,-.1,0);box(3.4,.03,2.2,0xe63946,-.6,.01,.9);
-box(10,3,.3,0xffb3c7,0,1.5,-4.15);box(.3,3,8,0xffd6a5,-5.15,1.5,0);
-{const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.fillStyle='#ffe066';g.fillRect(0,0,256,64);g.strokeStyle='#2b2d42';g.lineWidth=6;g.strokeRect(3,3,250,58);g.fillStyle='#2b2d42';g.font='bold 34px Arial';g.textAlign='center';g.fillText('TECH SHACK',128,44);
-const s=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));s.position.set(0,2.4,-3.98);scene.add(s)}
-const LAY=[[-3.2,-3.4,0,-3.2,-2.4,Math.PI],[-.8,-3.4,0,-.8,-2.4,Math.PI],[1.6,-3.4,0,1.6,-2.4,Math.PI],[-4.6,-1.8,Math.PI/2,-3.5,-1.8,-Math.PI/2],[-4.6,.2,Math.PI/2,-3.5,.2,-Math.PI/2],[-4.6,2.2,Math.PI/2,-3.5,2.2,-Math.PI/2],[-1.6,.6,0,-1.6,1.6,Math.PI],[.3,.6,0,.3,1.6,Math.PI]],shelves=[];
-P.forEach((p,i)=>{const L=LAY[i],g=new THREE.Group();g.position.set(L[0],0,L[1]);g.rotation.y=L[2];scene.add(g);box(1.8,.1,.7,0x6d4c41,0,.05,0,g);
-[.5,1,1.5].forEach(y=>box(1.8,.08,.7,0x8d6e63,0,y,0,g));box(.08,1.6,.7,0x5d4037,-.9,.8,0,g);box(.08,1.6,.7,0x5d4037,.9,.8,0,g);
-const it=new THREE.Group();g.add(it);shelves.push({it,g,k:-1})});
-function shelf(i){const p=P[i],st=S.prod[p.id].stock,k=st<=0?0:Math.max(1,Math.ceil(st/mx()*9)),s=shelves[i];if(s.k==k)return;s.k=k;s.it.clear();
-for(let n=0;n<k;n++)box(.42,.3,.4,p.c,-.6+(n%3)*.6,.7+Math.floor(n/3)*.5-.2+.15,0,s.it)}
-box(1.2,1,2.6,0x845ef7,3.9,.5,0);const reg=box(.6,.3,.5,0x212529,3.9,1.15,.4);
-const PL=[[4.4,3.4],[4.4,-3.2],[-4.4,3.8],[-2.2,3.6],[2.2,3.6]],plants=PL.map(([x,z])=>{const g=new THREE.Group();g.position.set(x,0,z);const a=new THREE.Mesh(new THREE.CylinderGeometry(.3,.22,.4,10),mat(0xc1440e));a.position.y=.2;const b=new THREE.Mesh(new THREE.SphereGeometry(.4,10,8),mat(0x2dc653));b.position.y=.75;g.add(a,b);g.visible=false;scene.add(g);return g});
-function person(shirt,hair){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(.27,.4,4,8),mat(shirt));body.position.y=.85;g.add(body);
+box(140,.2,60,0x7ed957,14,-.3,0);box(140,.1,5,0x6c757d,14,-.2,10.5);
+const LAY=[[-3.2,-3.4,0,-3.2,-2.4,Math.PI],[-.8,-3.4,0,-.8,-2.4,Math.PI],[1.6,-3.4,0,1.6,-2.4,Math.PI],[-4.6,-1.8,Math.PI/2,-3.5,-1.8,-Math.PI/2],[-4.6,.2,Math.PI/2,-3.5,.2,-Math.PI/2],[-4.6,2.2,Math.PI/2,-3.5,2.2,-Math.PI/2],[-1.6,.6,0,-1.6,1.6,Math.PI],[.3,.6,0,.3,1.6,Math.PI]];
+const bs=pi=>{const sl=pi>>1,L=LAY[sl],o=(pi&1)-.5,r=sl>2&&sl<6;return r?[L[3],L[4]-o*.9]:[L[3]+o*.9,L[4]]};
+function person(shirt,hair,par=scene){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(.27,.4,4,8),mat(shirt));body.position.y=.85;g.add(body);
 const head=new THREE.Group();head.position.y=1.5;g.add(head);head.add(new THREE.Mesh(new THREE.SphereGeometry(.26,12,10),mat(0xffd2a8)));
 const hr=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8,0,Math.PI*2,0,Math.PI/2),mat(hair));hr.position.y=.05;head.add(hr);
 [-1,1].forEach(q=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.04,6,6),mat(0x111111));e.position.set(q*.09,0,.23);head.add(e)});
 const legs=[-1,1].map(q=>{const l=box(.16,.5,.18,0x37474f,q*.12,.5,0,g);l.geometry.translate(0,-.25,0);return l});
 const arms=[-1,1].map(q=>{const a=box(.13,.4,.13,shirt,q*.36,1.15,0,g);a.geometry.translate(0,-.17,0);return a});
-scene.add(g);return{g,legs,arms,body,head,t:0,mov:0,ry:0,hop:0,look:0,reach:0}}
+par.add(g);return{g,legs,arms,body,head,t:0,mov:0,ry:0,hop:0,look:0,reach:0}}
+const stores=STORES.map((st,s)=>{const R=new THREE.Group();R.position.x=st.ox;scene.add(R);
+box(10,.2,8,st.fl,0,-.1,0,R);box(3.4,.03,2.2,st.rug,-.6,.01,.9,R);box(10,3,.3,st.wall[0],0,1.5,-4.15,R);box(.3,3,8,st.wall[1],-5.15,1.5,0,R);
+{const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.fillStyle=st.sc;g.fillRect(0,0,256,64);g.strokeStyle='#2b2d42';g.lineWidth=6;g.strokeRect(3,3,250,58);g.fillStyle='#2b2d42';g.font='bold 30px Arial';g.textAlign='center';g.fillText(st.sg,128,43);
+const m=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));m.position.set(0,2.4,-3.98);R.add(m)}
+const shelves=LAY.map(L=>{const g=new THREE.Group();g.position.set(L[0],0,L[1]);g.rotation.y=L[2];R.add(g);box(1.8,.1,.7,0x6d4c41,0,.05,0,g);
+[.5,1,1.5].forEach(y=>box(1.8,.08,.7,0x8d6e63,0,y,0,g));box(.08,1.6,.7,0x5d4037,-.9,.8,0,g);box(.08,1.6,.7,0x5d4037,.9,.8,0,g);box(.06,1.6,.7,0x5d4037,0,.8,0,g);
+const ig=[new THREE.Group(),new THREE.Group()];ig.forEach(i=>g.add(i));return{g,ig,k:[-1,-1]}});
+box(1.2,1,2.6,0x845ef7,3.9,.5,0,R);const reg=box(.6,.3,.5,0x212529,3.9,1.15,.4,R);
+const plants=[[4.4,3.4],[4.4,-3.2],[-4.4,3.8],[-2.2,3.6],[2.2,3.6]].map(([x,z])=>{const g=new THREE.Group();g.position.set(x,0,z);const a=new THREE.Mesh(new THREE.CylinderGeometry(.3,.22,.4,10),mat(0xc1440e));a.position.y=.2;const b=new THREE.Mesh(new THREE.SphereGeometry(.4,10,8),mat(0x2dc653));b.position.y=.75;g.add(a,b);g.visible=false;R.add(g);return g});
+const ca=person(s?0x12b886:0xab47bc,0x212121,R);ca.g.position.set(4.9,0,0);ca.g.rotation.y=ca.ry=-Math.PI/2;
+return{R,shelves,plants,reg,ca}});
+function shelf(s,pi){const p=STORES[s].P[pi],st=S.prod[p.id].stock,k=st<=0?0:Math.max(1,Math.ceil(st/mx()*6)),sl=stores[s].shelves[pi>>1],h=pi&1;if(sl.k[h]==k)return;sl.k[h]=k;sl.ig[h].clear();
+for(let n=0;n<k;n++)box(.34,.3,.4,p.c,(h?.45:-.45)+((n%2)-.5)*.4,.65+(n>>1)*.5,0,sl.ig[h])}
+function applyUp(){stores.forEach((x,s)=>{x.R.visible=!!S.own[s];x.plants.forEach((g,i)=>g.visible=i<S.up.decor);x.shelves.forEach((sl,i)=>{sl.g.visible=i<cnt(s)/2;sl.k=[-1,-1]});STORES[s].P.forEach((p,i)=>shelf(s,i))});stores[0].ca.g.visible=S.up.cashier>0;stores[1].ca.g.visible=true}
+const pl=person(0x2979ff,0x3e2723,stores[0].R),plT={x:2,z:2};pl.g.position.set(2,0,2);
 function mv(o,x,z,dt,sp=2.4){const p=o.g.position,dx=x-p.x,dz=z-p.z,d=Math.hypot(dx,dz);if(d<.04)return true;const st=Math.min(sp*dt,d);p.x+=dx/d*st;p.z+=dz/d*st;o.ry=Math.atan2(dx,dz);o.mov=1;return d-st<.04}
 let TT=0;
 function anim(o,dt){const s=Math.sin(o.t);
@@ -90,78 +97,80 @@ else{o.legs[0].rotation.x=o.legs[1].rotation.x=0;o.body.rotation.z=0;o.body.rota
 o.head.rotation.y=o.look?Math.sin(TT*3+o.g.id)*.6:0;
 if(o.hop>0){o.hop-=dt;o.g.position.y=Math.sin(Math.max(0,o.hop)/.5*Math.PI)*.45}else o.g.position.y=0;
 const d=((o.ry-o.g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;o.g.rotation.y+=d*Math.min(1,dt*12);o.mov=0}
-const fxs=[],one=new THREE.Vector3();
-function fly(i){const p=P[i],a=shelves[i].g.position,m=box(.3,.25,.3,p.c,a.x,1.1,a.z);fxs.push({m,a:m.position.clone(),b:new THREE.Vector3(3.9,1.4,.3),t:0,d:.7,k:0});
-for(let n=0;n<4;n++){const c=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.04,10),mat(0xffd700));c.rotation.x=Math.PI/2;c.position.set(3.9,1.3,.4);c.visible=false;scene.add(c);fxs.push({m:c,a:c.position.clone(),b:new THREE.Vector3(3.9+(n-1.5)*.35,2.7,.4),t:-(.7+n*.06),d:.8,k:1})}reg.scale.setScalar(1.5)}
-function fxUpd(dt){reg.scale.setScalar(reg.scale.x+(1-reg.scale.x)*Math.min(1,dt*8));
+const fxs=[];
+function fly(s,pi){const R=stores[s].R,a=stores[s].shelves[pi>>1].g.position,m=box(.3,.25,.3,STORES[s].P[pi].c,a.x,1.1,a.z,R);fxs.push({m,a:m.position.clone(),b:new THREE.Vector3(3.9,1.4,.3),t:0,d:.7,k:0,R});
+for(let n=0;n<4;n++){const c=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.04,10),mat(0xffd700));c.rotation.x=Math.PI/2;c.position.set(3.9,1.3,.4);c.visible=false;R.add(c);fxs.push({m:c,a:c.position.clone(),b:new THREE.Vector3(3.9+(n-1.5)*.35,2.7,.4),t:-(.7+n*.06),d:.8,k:1,R})}stores[s].reg.scale.setScalar(1.5)}
+function fxUpd(dt){stores.forEach(x=>x.reg.scale.setScalar(x.reg.scale.x+(1-x.reg.scale.x)*Math.min(1,dt*8)));
 for(let i=fxs.length-1;i>=0;i--){const f=fxs[i];f.t+=dt;if(f.t<0)continue;f.m.visible=true;const u=Math.min(1,f.t/f.d);f.m.position.lerpVectors(f.a,f.b,u);
 if(f.k==0){f.m.position.y+=Math.sin(u*Math.PI)*1.2;f.m.rotation.y+=dt*8}else{f.m.rotation.z+=dt*14;f.m.scale.setScalar(1-u*.6)}
-if(u>=1){scene.remove(f.m);fxs.splice(i,1)}}}
-const pl=person(0x2979ff,0x3e2723),plT={x:2,z:2};pl.g.position.set(2,0,2);
-const ca=person(0xab47bc,0x212121);ca.g.position.set(4.9,0,0);ca.g.rotation.y=-Math.PI/2;ca.ry=-Math.PI/2;
-function applyUp(){plants.forEach((g,i)=>g.visible=i<S.up.decor);ca.g.visible=S.up.cashier>0;P.forEach((p,i)=>{shelves[i].g.visible=i<cnt();shelves[i].k=-1;shelf(i)})}
+if(u>=1){f.R.remove(f.m);fxs.splice(i,1)}}}
 /* ---------- CUSTOMERS ---------- */
-const C=[],Q=[];let spT=1;
-function pop(t,p,cls=''){const v=new THREE.Vector3(p.x,2.2,p.z).project(cam),d=document.createElement('div');d.className='pop '+cls;d.textContent=t;d.style.left=(v.x*.5+.5)*innerWidth+'px';d.style.top=(-v.y*.5+.5)*innerHeight+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1200)}
-function spawn(){const o=person([0xff7043,0x26a69a,0xffca28,0x7e57c2,0x66bb6a,0xec407a][Math.random()*6|0],[0x212121,0x6d4c41,0xffd54f][Math.random()*3|0]);
-o.g.position.set(Math.random()-.5,0,12);o.st='door';o.pi=Math.random()*cnt()|0;o.wtp=(.75+Math.random()*.75)*(1+.06*S.up.decor);C.push(o)}
-function bad(c,t,r){pop(t,c.g.position,'bad');S.rep=Math.max(.5,S.rep-r);c.st='leave'}
-const staffed=()=>S.up.cashier>0||Math.hypot(pl.g.position.x-3.9,pl.g.position.z)<2.8;
-function updC(c,dt){const p=P[c.pi],ps=S.prod[p.id];
+const C=[],Q=[[],[]],spT=[1,3],wv=new THREE.Vector3();
+function pop(t,g,cls=''){g.getWorldPosition(wv);wv.y=2.2;wv.project(cam);const d=document.createElement('div');d.className='pop '+cls;d.textContent=t;d.style.left=(wv.x*.5+.5)*innerWidth+'px';d.style.top=(-wv.y*.5+.5)*innerHeight+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1200)}
+function spawn(s){const o=person([0xff7043,0x26a69a,0xffca28,0x7e57c2,0x66bb6a,0xec407a][Math.random()*6|0],[0x212121,0x6d4c41,0xffd54f][Math.random()*3|0],stores[s].R);
+o.g.position.set(Math.random()-.5,0,12);o.st='door';o.s=s;o.pi=Math.random()*cnt(s)|0;o.wtp=(.75+Math.random()*.75)*(1+.06*S.up.decor);C.push(o)}
+function bad(c,t,r){pop(t,c.g,'bad');S.rep=Math.max(.5,S.rep-r);c.st='leave'}
+const staffed=s=>s==1||S.up.cashier>0||Math.hypot(pl.g.position.x-3.9,pl.g.position.z)<2.8;
+function updC(c,dt){const s=c.s,q=Q[s],p=STORES[s].P[c.pi],ps=S.prod[p.id];
 if(c.st=='door'){if(mv(c,0,4.6,dt))c.st='shelf'}
-else if(c.st=='shelf'){if(mv(c,LAY[c.pi][3],LAY[c.pi][4],dt)){c.st='browse';c.tm=1.4+Math.random();c.look=1;c.reach=1;c.ry=LAY[c.pi][5];pop(p.e,c.g.position)}}
-else if(c.st=='browse'){c.tm-=dt;if(c.tm<=0){c.look=0;c.reach=0;if(ps.stock<=0)bad(c,'😠 Out of '+p.n,.03);else if(ps.price/p.ref>c.wtp)bad(c,'💸 Too pricey!',.01);else if(Q.length>=4)bad(c,'😤 Too crowded',.01);else{Q.push(c);c.st='queue';c.srv=0}}}
-else if(c.st=='queue'){const i=Q.indexOf(c),at=mv(c,3.9,1.9+i*.95,dt);
-if(i==0&&at){c.ry=Math.PI;if(staffed()){c.srv+=dt;if(c.srv>=coTime()){Q.shift();if(ps.stock<=0)bad(c,'😠 Sold out!',.03);else{pop('+$'+sale(p),c.g.position);fly(c.pi);c.hop=.5;c.st='leave';shelf(c.pi)}}}}}
+else if(c.st=='shelf'){const b=bs(c.pi);if(mv(c,b[0],b[1],dt)){c.st='browse';c.tm=1.4+Math.random();c.look=1;c.reach=1;c.ry=LAY[c.pi>>1][5];pop(p.e,c.g)}}
+else if(c.st=='browse'){c.tm-=dt;if(c.tm<=0){c.look=0;c.reach=0;if(ps.stock<=0)bad(c,'😠 Out of '+p.n,.03);else if(ps.price/p.ref>c.wtp)bad(c,'💸 Too pricey!',.01);else if(q.length>=4)bad(c,'😤 Too crowded',.01);else{q.push(c);c.st='queue';c.srv=0}}}
+else if(c.st=='queue'){const i=q.indexOf(c),at=mv(c,3.9,1.9+i*.95,dt);
+if(i==0&&at){c.ry=Math.PI;if(staffed(s)){c.srv+=dt;if(c.srv>=coTime()){q.shift();if(ps.stock<=0)bad(c,'😠 Sold out!',.03);else{pop('+$'+sale(p),c.g);fly(s,c.pi);c.hop=.5;c.st='leave';shelf(s,c.pi)}}}}}
 else if(c.st=='leave'){if(mv(c,0,4.6,dt))c.st='out'}
-else if(c.st=='out'){if(mv(c,0,13,dt)){scene.remove(c.g);C.splice(C.indexOf(c),1)}}}
+else if(c.st=='out'){if(mv(c,0,13,dt)){c.g.parent.remove(c.g);C.splice(C.indexOf(c),1)}}}
 /* ---------- INPUT ---------- */
 const rc=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
-ren.domElement.addEventListener('pointerdown',e=>{v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(v2,cam);if(rc.ray.intersectPlane(gp,hit)){plT.x=clamp(hit.x,-4.6,4.2);plT.z=clamp(hit.z,-2.6,4)}});
+ren.domElement.addEventListener('pointerdown',e=>{if(cur!=0)return toast('Your pet keeper runs this shop 🐾');v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(v2,cam);if(rc.ray.intersectPlane(gp,hit)){plT.x=clamp(hit.x,-4.6,4.2);plT.z=clamp(hit.z,-2.6,4)}});
 /* ---------- UI ---------- */
 let tab='',tt;
 function toast(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>e.style.opacity=0,1500)}
 function modal(h,btn,cb){$('mbox').innerHTML=h+`<br><button id="mok">${btn}</button>`;$('modal').style.display='flex';$('mok').onclick=()=>{$('modal').style.display='none';cb&&cb()}}
+function ups(){const s=cur;return[{k:'shelf',n:'📚 Bigger Shelves',d:'+10 max stock per product',base:150,mul:1.8,max:5},{k:'decor',n:'🪴 Decorations',d:'More visitors, and customers accept higher prices',base:200,mul:2,max:5},{k:'counter',n:'⚡ Faster Checkout',d:'Customers get served quicker',base:120,mul:1.8,max:5},
+...(s==0?[{k:'cashier',n:'🧑‍💼 Hire Cashier',d:'Checkout works without you at the counter',base:250,mul:1,max:1}]:[]),{k:'range',n:'🛍️ New Product Range',d:'Unlocks new shelves and products (2 levels)',base:s?800:400,mul:3.75,max:2}]}
+const lv=k=>k=='range'?S.up.r[cur]:S.up[k];
 function render(){const pn=$('panel');if(!tab){pn.style.display='none';return}pn.style.display='block';let h='';
 if(tab=='stock'){h+=`<div class=row><span>Sold <b data-v=sold></b></span><span>Revenue <b data-v=rev></b></span><span>Profit <b data-v=profit></b></span></div>`;
-P.slice(0,cnt()).forEach(p=>h+=`<div class=card><div class=t>${p.e} ${p.n}</div><div>Stock <b data-v="st:${p.id}"></b> · Cost $${p.cost} each</div><div class=bt><button data-a="buy:${p.id}:5">Buy 5</button><button data-a="buy:${p.id}:10">Buy 10</button><button data-a="fill:${p.id}" data-v="fc:${p.id}"></button></div></div>`)}
+PL(cur).forEach(p=>h+=`<div class=card><div class=t>${p.e} ${p.n}</div><div>Stock <b data-v="st:${p.id}"></b> · Cost $${p.cost} each</div><div class=bt><button data-a="buy:${p.id}:5">Buy 5</button><button data-a="buy:${p.id}:10">Buy 10</button><button data-a="fill:${p.id}" data-v="fc:${p.id}"></button></div></div>`)}
 if(tab=='price'){h+=`<div class=row>Higher price = more profit per sale but fewer buyers.</div>`;
-P.slice(0,cnt()).forEach(p=>h+=`<div class=card><div class=t>${p.e} ${p.n} (cost $${p.cost})</div><div class=bt><button data-a="pr:${p.id}:-5">−5</button><button data-a="pr:${p.id}:-1">−1</button><b data-v="pr:${p.id}" style="font-size:20px;min-width:52px;text-align:center"></b><button data-a="pr:${p.id}:1">+1</button><button data-a="pr:${p.id}:5">+5</button></div><div>Profit per sale <b data-v="pf:${p.id}"></b> · Buyers who accept <b data-v="dm:${p.id}"></b></div></div>`)}
-if(tab=='up')UP.forEach(u=>{const l=S.up[u.k],c=Math.round(u.base*u.mul**l);h+=`<div class=card><div class=t>${u.n} · Lv ${l}/${u.max}</div><div>${u.d}</div><div class=bt>${l>=u.max?'<b>MAX ✅</b>':`<button data-a="up:${u.k}">Buy · $${fm(c)}</button>`}</div></div>`});
+PL(cur).forEach(p=>h+=`<div class=card><div class=t>${p.e} ${p.n} (cost $${p.cost})</div><div class=bt><button data-a="pr:${p.id}:-5">−5</button><button data-a="pr:${p.id}:-1">−1</button><b data-v="pr:${p.id}" style="font-size:20px;min-width:52px;text-align:center"></b><button data-a="pr:${p.id}:1">+1</button><button data-a="pr:${p.id}:5">+5</button></div><div>Profit per sale <b data-v="pf:${p.id}"></b> · Buyers who accept <b data-v="dm:${p.id}"></b></div></div>`)}
+if(tab=='up')ups().forEach(u=>{const l=lv(u.k),c=Math.round(u.base*u.mul**l);h+=`<div class=card><div class=t>${u.n} · Lv ${l}/${u.max}</div><div>${u.d}</div><div class=bt>${l>=u.max?'<b>MAX ✅</b>':`<button data-a="up:${u.k}">Buy · $${fm(c)}</button>`}</div></div>`});
+if(tab=='stores')STORES.forEach((st,s)=>h+=`<div class=card><div class=t>${s?'🐾':'📱'} ${st.n}</div><div>${s?'Dogs, cats, birds, hamsters and supplies. Comes with its own shop keeper!':'Your first shop. Gadgets and accessories.'}</div><div class=bt>${S.own[s]?(cur==s?'<b>👀 Viewing now</b>':`<button data-a="store:${s}">Go to shop</button>`):`<button data-a="store:${s}">Buy · $${fm(st.cost)}</button>`}</div></div>`);
 if(tab=='menu')h+=`<div class="card m"><div class=t>Save & backup</div><div>Your game saves automatically on this phone and works offline.</div><div class=bt><button data-a="export">Export backup</button><button data-a="import">Import backup</button><button data-a="reset">Reset game</button></div></div>`;
 pn.innerHTML=h;refresh()}
-function refresh(){$('money').textContent='$'+fm(S.money);$('stars').textContent='⭐ '+S.rep.toFixed(1);
-const out=P.slice(0,cnt()).filter(p=>S.prod[p.id].stock<=0).map(p=>p.n);$('alert').textContent=out.length?'⚠️ Out of stock: '+out.join(', '):'';
-$$('[data-v]').forEach(el=>{const[k,i]=el.dataset.v.split(':'),ps=i&&S.prod[i],p=i&&P.find(x=>x.id==i);let t='';
+function refresh(){$('money').textContent='$'+fm(S.money);$('stars').textContent='⭐ '+S.rep.toFixed(1);$('sn').textContent='🏪 '+STORES[cur].n;
+const out=[];STORES.forEach((st,s)=>S.own[s]&&PL(s).forEach(p=>S.prod[p.id].stock<=0&&out.push(p.n)));$('alert').textContent=out.length?'⚠️ Out of stock: '+out.slice(0,3).join(', ')+(out.length>3?' +'+(out.length-3):''):'';
+$$('[data-v]').forEach(el=>{const[k,i]=el.dataset.v.split(':'),ps=i&&S.prod[i],p=i&&ALL.find(x=>x.id==i);let t='';
 if(k=='sold')t=fm(S.sold);else if(k=='rev')t='$'+fm(S.rev);else if(k=='profit')t='$'+fm(S.profit);
 else if(k=='st'){t=ps.stock+'/'+mx();el.className=ps.stock<=0?'low':''}else if(k=='pr')t='$'+ps.price;else if(k=='pf')t='$'+(ps.price-p.cost);
 else if(k=='dm')t=Math.round(dem(p)*100)+'%';else if(k=='fc')t='Fill ($'+fm(Math.max(0,mx()-ps.stock)*p.cost)+')';el.textContent=t})}
 $('tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;tab=tab==b.dataset.t?'':b.dataset.t;render()};
 $('panel').onclick=e=>{const b=e.target.closest('[data-a]');if(b)act(b.dataset.a.split(':'))};
 function act([k,a,b]){
-if(k=='buy'||k=='fill'){const i=P.findIndex(x=>x.id==a),p=P[i],ps=S.prod[a];let n=k=='fill'?mx()-ps.stock:Math.min(+b,mx()-ps.stock);if(n<=0)return toast('Shelf is full!');
-if(S.money<n*p.cost){n=Math.floor(S.money/p.cost);if(n<=0)return toast('Not enough cash 💸')}S.money-=n*p.cost;ps.stock+=n;shelf(i);toast(`Bought ${n} × ${p.n}`)}
-else if(k=='pr'){const p=P.find(x=>x.id==a),ps=S.prod[a];ps.price=clamp(ps.price+ +b,1,p.ref*3)}
-else if(k=='up'){const u=UP.find(x=>x.k==a),l=S.up[a],c=Math.round(u.base*u.mul**l);if(l>=u.max)return;if(S.money<c)return toast('Not enough cash 💸');S.money-=c;S.up[a]++;applyUp();toast('Upgraded! 🎉')}
+if(k=='buy'||k=='fill'){const p=ALL.find(x=>x.id==a),i=STORES[cur].P.indexOf(p),ps=S.prod[a];let n=k=='fill'?mx()-ps.stock:Math.min(+b,mx()-ps.stock);if(n<=0)return toast('Shelf is full!');
+if(S.money<n*p.cost){n=Math.floor(S.money/p.cost);if(n<=0)return toast('Not enough cash 💸')}S.money-=n*p.cost;ps.stock+=n;shelf(cur,i);toast(`Bought ${n} × ${p.n}`)}
+else if(k=='pr'){const p=ALL.find(x=>x.id==a);S.prod[a].price=clamp(S.prod[a].price+ +b,1,p.ref*3)}
+else if(k=='up'){const u=ups().find(x=>x.k==a),l=lv(a),c=Math.round(u.base*u.mul**l);if(l>=u.max)return;if(S.money<c)return toast('Not enough cash 💸');S.money-=c;if(a=='range')S.up.r[cur]++;else S.up[a]++;applyUp();toast('Upgraded! 🎉')}
+else if(k=='store'){const s=+a;if(!S.own[s]){if(S.money<STORES[s].cost)return toast('Not enough cash 💸');S.money-=STORES[s].cost;S.own[s]=1;applyUp();toast('New shop opened! 🎉')}cur=s;if(s==1)toast('Buy stock for your new shop 🐾')}
 else if(k=='export'){const s=btoa(JSON.stringify(S));try{navigator.clipboard.writeText(s)}catch(e){}prompt('Backup code (copied if possible). Save it somewhere safe:',s)}
 else if(k=='import'){const s=prompt('Paste your backup code:');if(!s)return;try{const j=JSON.parse(atob(s.trim()));if(!valid(j))throw 0;S=Object.assign(fresh(),j);fix();applyUp();save();toast('Backup loaded ✅')}catch(e){toast('That code is not valid')}}
-else if(k=='reset'){if(confirm('Delete ALL progress and start over?')){S=fresh();applyUp();save();toast('Fresh start')}}
+else if(k=='reset'){if(confirm('Delete ALL progress and start over?')){S=fresh();cur=0;applyUp();save();toast('Fresh start')}}
 save();render()}
 /* ---------- START ---------- */
 applyUp();
-function offline(){const el=(Date.now()-S.t)/1000;if(el<0){S.t=Date.now();return null}if(el<120)return null;
-let n=Math.min(2000,Math.floor(Math.min(el,7200)/spawnEvery()*(S.up.cashier?.5:.25))),m0=S.money,sold=0;
-for(;n>0;n--){const p=P[Math.random()*cnt()|0];if(S.prod[p.id].stock>0&&Math.random()<dem(p)){sale(p);sold++}}
+function offline(){const el=(Date.now()-S.t)/1000;if(el<0){S.t=Date.now();return null}if(el<120)return null;let sold=0,m0=S.money;
+STORES.forEach((st,s)=>{if(!S.own[s])return;let n=Math.min(2000,Math.floor(Math.min(el,7200)/spawnEvery()*(s==1||S.up.cashier?.5:.25)));
+for(;n>0;n--){const L=PL(s),p=L[Math.random()*L.length|0];if(S.prod[p.id].stock>0&&Math.random()<dem(p)){sale(p);sold++}}});
 applyUp();return sold?{sold,gain:S.money-m0}:null}
 const off=offline();save();refresh();
 const intro=()=>S.intro?0:modal(`<h2>💔 DUMPED TO BILLIONAIRE</h2><p>She called you <b>broke</b>. So you rented a tiny shop that smells like old chips.</p><p><b>Tap the floor</b> to walk. Stand near the <b>purple counter</b> to ring up customers. Keep shelves stocked, set smart prices, and build an empire!</p><p><i>"She called you broke. Build an empire."</i></p>`,'Start hustling 💪',()=>{S.intro=1;save()});
-off?modal(`<h2>Welcome back! 💰</h2><p>While you were away, your shop sold <b>${off.sold}</b> items and earned <b>$${fm(off.gain)}</b>.</p><p>(Offline earnings are capped at 2 hours and limited by your stock.)</p>`,'Collect',()=>{refresh();intro()}):intro();
+off?modal(`<h2>Welcome back! 💰</h2><p>While you were away, your shops sold <b>${off.sold}</b> items and earned <b>$${fm(off.gain)}</b>.</p><p>(Offline earnings are capped at 2 hours and limited by your stock.)</p>`,'Collect',()=>{refresh();intro()}):intro();
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
-spT-=dt;if(spT<=0){spT=spawnEvery()*(.7+Math.random()*.6);if(C.length<5+2*S.up.decor)spawn()}
-[...C].forEach(c=>updC(c,dt));mv(pl,plT.x,plT.z,dt,3.4);anim(pl,dt);C.forEach(c=>anim(c,dt));
-TT+=dt;anim(ca,dt);fxUpd(dt);ren.render(scene,cam);requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;TT+=dt;
+for(let s=0;s<2;s++)if(S.own[s]){spT[s]-=dt;if(spT[s]<=0){spT[s]=spawnEvery()*(.7+Math.random()*.6);if(C.filter(c=>c.s==s).length<5+2*S.up.decor)spawn(s)}}
+[...C].forEach(c=>updC(c,dt));mv(pl,plT.x,plT.z,dt,3.4);anim(pl,dt);C.forEach(c=>anim(c,dt));anim(stores[0].ca,dt);anim(stores[1].ca,dt);fxUpd(dt);
+TGx+=(STORES[cur].ox-TGx)*Math.min(1,dt*4);cam.position.set(TGx+14,TG.y+13,TG.z+14);cam.lookAt(TGx,TG.y,TG.z);ren.render(scene,cam);requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
-setInterval(()=>{refresh()},500);setInterval(save,5000);
+setInterval(refresh,500);setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});addEventListener('pagehide',save);
 </script></body></html>
