@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+env:
+  # Google's TEST AdMob app ID. Replace with your real one when your AdMob account is ready.
+  ADMOB_APP_ID: ca-app-pub-3940256099942544~3347511713
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,6 +32,10 @@ jobs:
 
       - name: Create Android project
         run: npx cap add android
+
+      - name: Add AdMob app ID to the Android manifest
+        run: |
+          sed -i "s#</application>#<meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\"/></application>#" android/app/src/main/AndroidManifest.xml
 
       - name: Sync game files
         run: npx cap sync android
