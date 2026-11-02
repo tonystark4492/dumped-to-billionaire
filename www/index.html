@@ -63,13 +63,15 @@ input[type=range]{width:55%;accent-color:#40c057;touch-action:pan-x}
 @keyframes bump{40%{transform:scale(1.15)}}@keyframes up{to{transform:translate(-50%,-110px);opacity:0}}@keyframes fl{to{transform:translateY(-34px);opacity:0}}
 @keyframes cf{to{transform:translateY(110vh) rotate(540deg);opacity:.2}}@keyframes bob{50%{transform:translateY(-8px)}}@keyframes drop{from{transform:translateY(-120px);opacity:0}}
 @keyframes spin{to{transform:rotateY(360deg)}}@keyframes load{to{width:100%}}@keyframes pls{50%{transform:scale(1.06)}}@keyframes drift{to{transform:translateX(130vw)}}@keyframes walk{to{transform:translateX(130vw)}}
+#auc{display:none;position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:6;background:#fff8dc;border:4px solid #fa5252;border-radius:20px;padding:10px;animation:slide .25s;box-shadow:0 6px 0 #0004}
+.ah{font-weight:900;font-size:18px;color:#c92a2a;text-align:center}.ap{text-align:center;margin:4px 0}.ab{display:flex;gap:8px;margin:6px 0}.ab>div{flex:1;border:3px solid #dee2e6;border-radius:12px;padding:6px;text-align:center;font-weight:800;background:#fff;transition:transform .2s}.ab>div b{display:block;font-size:20px;color:#2b9348}.ab>div.lead{border-color:#40c057;background:#ebfbee;transform:scale(1.04)}
 </style></head><body>
 <div id="hud" style="display:none">
 <div class="pill" id="moneyP"><span>💵</span><span id="money"></span></div>
 <button class="btn y sq" id="pbtn">☰<i class="dot" id="pdot"></i></button>
 <div class="pill sm col" id="snw"><span id="sn"></span><div class="bar mn"><i id="xp"></i></div></div>
 <div class="pill sm" id="stars"></div><div id="alert"></div></div>
-<div id="panel"></div><div id="toast"></div>
+<div id="auc"></div><div id="panel"></div><div id="toast"></div>
 <div id="tabs" style="display:none"><button data-t="stock"><b>📦</b><span>Stock</span></button><button data-t="price"><b>💲</b><span>Prices</span></button><button data-t="up"><b>⬆️</b><span>Upgrades</span></button><button data-t="stores"><b>🏬</b><span>Shops</span></button><button data-t="free"><b>🎁</b><span>Rewards</span></button></div>
 <div id="modal"><div id="mbox"></div></div>
 <div id="sheet"><div class="sc" id="sc"></div></div>
@@ -131,43 +133,43 @@ const FOOD=mk([['chp','Chips','🍟',5,10,0xffd43b],['cnd','Candy','🍬',3,7,0x
 ['ssh','Sushi','🍣',35,75,0xff8787],['stk','Steak','🥩',45,95,0xc92a2a],['cke','Cake','🎂',30,65,0xf06595],['lob','Lobster','🦞',80,170,0xe03131]]);
 const STORES=[{n:'Tech Shack',P:TECH,wall:[0xffb3c7,0xffd6a5],fl:0xf6e0b5,rug:0xe63946,ox:0,sg:'TECH SHACK',sc:'#ffe066',cost:0},{n:'Pet Paradise',P:PETS,wall:[0xa5d8ff,0xb2f2bb],fl:0xfff3bf,rug:0x4263eb,ox:28,sg:'PET PARADISE',sc:'#b2f2bb',cost:2500},{n:'Fashion Fiesta',P:FASH,wall:[0xffc9de,0xe5dbff],fl:0xffe8cc,rug:0xae3ec9,ox:56,sg:'FASHION FIESTA',sc:'#ffc9de',cost:6000},{n:'Snack Street',P:FOOD,wall:[0xffd8a8,0xffec99],fl:0xfff9db,rug:0xf03e3e,ox:84,sg:'SNACK STREET',sc:'#ffec99',cost:12000}];
 const ALL=[...TECH,...PETS,...FASH,...FOOD];
-Object.assign(STORES[0],{wall:[0x5f3dc4,0x7048e8],t:[0x5a4bbd,0x7a6bd6],ac:0x00e5ff,sc:"#1b1464",tx:"#7df9ff",rug:0xe03131});Object.assign(STORES[1],{t:[0xfff3bf,0xd8f5a2],ac:0x69db7c});Object.assign(STORES[2],{t:[0xffe3ec,0xfff9fb],ac:0xff66c4});Object.assign(STORES[3],{t:[0xfff5f5,0xff8787],ac:0xffa94d});
+Object.assign(STORES[0],{wall:[0x5f3dc4,0x7048e8],t:[0x5a4bbd,0x7a6bd6],ac:0x00e5ff,sc:"#1b1464",tx:"#7df9ff",rug:0x3bb08a});Object.assign(STORES[1],{t:[0xfff3bf,0xd8f5a2],ac:0x69db7c,rug:0xe8dcc0});Object.assign(STORES[2],{t:[0xffe3ec,0xfff9fb],ac:0xff66c4,rug:0xc3dfc4});Object.assign(STORES[3],{t:[0xfff5f5,0xff8787],ac:0xffa94d,rug:0xf1e0c5});
 function fresh(){const s={money:500,rep:1,sold:0,rev:0,profit:0,up:{shelf:0,decor:0,counter:0,cashier:0,r:[0,0,0,0]},own:[1,0,0,0],prod:{},t:Date.now(),intro:0};ALL.forEach(p=>s.prod[p.id]={stock:TECH.indexOf(p)>=0&&TECH.indexOf(p)<6?5:0,price:p.ref});return s}
 function valid(j){return j&&typeof j.money=='number'&&j.prod&&j.up&&j.prod.case}
 let S;try{const j=JSON.parse(localStorage.getItem(KEY));S=valid(j)?Object.assign(fresh(),j):fresh()}catch(e){S=fresh()}
-function fix(){const u=S.up;S.up=Object.assign({shelf:0,decor:0,counter:0,cashier:0},u);S.up.r=Array.isArray(u.r)?u.r:[u.range||0];while(S.up.r.length<4)S.up.r.push(0);S.own=Array.isArray(S.own)?S.own:[1];while(S.own.length<4)S.own.push(0);S.ads=S.ads||{d:'',n:{}};S.boost=S.boost||0;S.served=S.served||0;S.upc=S.upc||0;S.rs=S.rs||0;S.adw=S.adw||0;S.ach=S.ach||{};S.daily=S.daily||{last:'',streak:0};ALL.forEach(p=>S.prod[p.id]||(S.prod[p.id]={stock:0,price:p.ref}))}fix();
+function fix(){const u=S.up;S.up=Object.assign({shelf:0,decor:0,counter:0,cashier:0},u);S.up.r=Array.isArray(u.r)?u.r:[u.range||0];while(S.up.r.length<4)S.up.r.push(0);S.own=Array.isArray(S.own)?S.own:[1];while(S.own.length<4)S.own.push(0);S.ads=S.ads||{d:'',n:{}};S.ads.t=S.ads.t||{};S.boost=S.boost||0;S.served=S.served||0;S.upc=S.upc||0;S.rs=S.rs||0;S.adw=S.adw||0;S.ach=S.ach||{};S.pb=S.pb||0;S.disc=S.disc||0;S.rm=S.rm||0;S.dch=S.dch||null;S.daily=S.daily||{last:'',streak:0};ALL.forEach(p=>S.prod[p.id]||(S.prod[p.id]={stock:0,price:p.ref}))}fix();
 function save(){S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 let cur=0;
-const mx=()=>20+10*S.up.shelf,spawnEvery=()=>4/(S.rep*(1+.15*S.up.decor)*(Date.now()<S.boost?2:1)),coTime=()=>2.2/(1+.3*S.up.counter),cnt=s=>[6,12,16][S.up.r[s]||0],PL=s=>STORES[s].P.slice(0,cnt(s));
+const mx=()=>20+10*S.up.shelf,spawnEvery=()=>4/(S.rep*(1+.15*S.up.decor)*(Date.now()<S.boost?2:1)*(Date.now()<RUSH?2.2:1)),coTime=()=>2.2/(1+.3*S.up.counter),cnt=s=>[6,12,16][S.up.r[s]||0],PL=s=>STORES[s].P.slice(0,cnt(s));
 function dem(p){const d=1+.06*S.up.decor,lo=.75*d,hi=1.5*d;return clamp((hi-S.prod[p.id].price/p.ref)/(hi-lo),0,1)}
-function sale(p){const ps=S.prod[p.id];ps.stock--;S.money+=ps.price;S.rev+=ps.price;S.profit+=ps.price-p.cost;S.sold++;S.served++;S.rep=Math.min(3,S.rep+.01);return ps.price}
+function sale(p,pr){const ps=S.prod[p.id],price=pr||ps.price,bn=Date.now()<S.pb?price-p.cost:0;ps.stock--;S.money+=price+bn;S.rev+=price+bn;S.profit+=price-p.cost+bn;S.sold++;S.served++;S.rep=Math.min(3,S.rep+.01);return price+bn}
 /* ---------- 3D SCENE ---------- */
 const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));document.body.prepend(ren.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9be7ff);
-const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,100),TG=new THREE.Vector3(0,-1.5,.5);let TGx=0;
+const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,100),TG=new THREE.Vector3(3.5,-1.5,4);let TGx=0;
 function size(){const w=innerWidth,h=innerHeight,a=w/h,hh=a<1?8.5/a:8.5;cam.left=-hh*a;cam.right=hh*a;cam.top=hh;cam.bottom=-hh;cam.updateProjectionMatrix();ren.setSize(w,h)}
 size();addEventListener('resize',size);
 scene.add(new THREE.HemisphereLight(0xffffff,0xb0c4de,.95));const dl=new THREE.DirectionalLight(0xffffff,.75);dl.position.set(5,12,7);scene.add(dl,dl.target);dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-14,right:14,top:14,bottom:-14,near:1,far:50});dl.shadow.bias=-.0006;ren.shadowMap.type=THREE.PCFSoftShadowMap;
 const M={},mat=c=>M[c]||(M[c]=new THREE.MeshLambertMaterial({color:c}));
 function box(w,h,d,c,x,y,z,par=scene){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;par.add(m);return m}
-box(260,.2,60,0x7ed957,40,-.3,0);box(260,.1,5,0x6c757d,40,-.2,10.5);
+box(420,.2,160,0x7ed957,40,-.3,30);box(420,.1,5,0x6c757d,40,-.2,10.5);
 const GC={},NM={};
 function G(t,a,b,c){const k=t+[a,b,c].join('_');return GC[k]||(GC[k]=t=='b'?new THREE.BoxGeometry(a,b,c):t=='s'?new THREE.SphereGeometry(a,8,6):t=='c'?new THREE.CylinderGeometry(a,a,b,10):t=='o'?new THREE.ConeGeometry(a,b,8):new THREE.TorusGeometry(a,b,6,12))}
 const nb=(w,h,d,c,x,y,z,p)=>{const m=new THREE.Mesh(G('b',w,h,d),NM[c]||(NM[c]=new THREE.MeshBasicMaterial({color:c})));m.position.set(x,y,z);p.add(m);return m};
 function tex(a,b){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),h=n=>'#'+n.toString(16).padStart(6,'0');g.fillStyle=h(a);g.fillRect(0,0,64,64);g.fillStyle=h(b);g.fillRect(0,0,32,32);g.fillRect(32,32,32,32);
 const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(5,4);t.magFilter=THREE.NearestFilter;return t}
-const FXS=[{b:0x3b3f72,p:0x2b2d52,base:0x1b1464},{b:0xb08968,p:0x7f5539,base:0x6d4c41},{b:0xffffff,p:0xf06595,base:0xffc9de},{b:0xfff3bf,p:0xc92a2a,base:0xe03131}];
-const LAY=[[-3.2,-3.4,0,-3.2,-2.4,Math.PI],[-.8,-3.4,0,-.8,-2.4,Math.PI],[1.6,-3.4,0,1.6,-2.4,Math.PI],[-4.6,-1.8,Math.PI/2,-3.5,-1.8,-Math.PI/2],[-4.6,.2,Math.PI/2,-3.5,.2,-Math.PI/2],[-4.6,2.2,Math.PI/2,-3.5,2.2,-Math.PI/2],[-1.6,.6,0,-1.6,1.6,Math.PI],[.3,.6,0,.3,1.6,Math.PI]];
-const bs=pi=>{const sl=pi>>1,L=LAY[sl],o=(pi&1)-.5,r=sl>2&&sl<6;return r?[L[3],L[4]-o*.9]:[L[3]+o*.9,L[4]]};
+const FXS=[{b:0x8c7ae6,p:0x5a47b8,base:0x6a58cf},{b:0xb08968,p:0x7f5539,base:0x6d4c41},{b:0xffffff,p:0xf06595,base:0xffc9de},{b:0xfff3bf,p:0xc92a2a,base:0xe03131}];
+const LAY=[[-3.2,-3.4,0,-3.2,-2.4,Math.PI],[-.8,-3.4,0,-.8,-2.4,Math.PI],[1.6,-3.4,0,1.6,-2.4,Math.PI],[-4.6,-1.8,Math.PI/2,-3.5,-1.8,-Math.PI/2],[-4.6,.2,Math.PI/2,-3.5,.2,-Math.PI/2],[-4.6,2.2,Math.PI/2,-3.5,2.2,-Math.PI/2],[-2.2,.2,Math.PI/2,-1.4,.2,-Math.PI/2],[.4,.2,Math.PI/2,1.4,.2,-Math.PI/2]];let RUSH=0;const PLANTS=[[-4.5,3.6],[4.7,3.6],[-4.5,-3.5],[-1.9,3.7],[-3.3,3.7]];
+const bs=pi=>{const sl=pi>>1,L=LAY[sl],o=(pi&1)-.5,r=sl>2;return r?[L[3],L[4]-o*.9]:[L[3]+o*.9,L[4]]};
 function person(shirt,hair,par=scene){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(.27,.4,4,8),mat(shirt));body.position.y=.85;g.add(body);
 const head=new THREE.Group();head.position.y=1.5;g.add(head);head.add(new THREE.Mesh(new THREE.SphereGeometry(.26,12,10),mat(0xffd2a8)));
 const hr=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8,0,Math.PI*2,0,Math.PI/2),mat(hair));hr.position.y=.05;head.add(hr);
 [-1,1].forEach(q=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.04,6,6),mat(0x111111));e.position.set(q*.09,0,.23);head.add(e)});
 const legs=[-1,1].map(q=>{const l=box(.16,.5,.18,0x37474f,q*.12,.5,0,g);l.geometry.translate(0,-.25,0);return l});
 const arms=[-1,1].map(q=>{const a=box(.13,.4,.13,shirt,q*.36,1.15,0,g);a.geometry.translate(0,-.17,0);return a});
-g.traverse(o=>{if(o.isMesh)o.castShadow=true});par.add(g);return{g,legs,arms,body,head,t:0,mov:0,ry:0,hop:0,look:0,reach:0}}
+g.traverse(o=>{if(o.isMesh)o.castShadow=true});par.add(g);return{g,legs,arms,body,head,t:0,mov:0,ry:0,hop:0,look:0,reach:0,v:0,arg:0}}
 const stores=STORES.map((st,s)=>{const R=new THREE.Group();R.position.x=st.ox;scene.add(R);
-{const f=new THREE.Mesh(G('b',10,.2,8),new THREE.MeshLambertMaterial({map:tex(st.t[0],st.t[1])}));f.position.y=-.1;f.receiveShadow=true;R.add(f)}box(3.4,.03,2.2,st.rug,-.6,.01,.9,R);box(10,3,.3,st.wall[0],0,1.5,-4.15,R);box(.3,3,8,st.wall[1],-5.15,1.5,0,R);
+{const f=new THREE.Mesh(G('b',10,.2,8),new THREE.MeshLambertMaterial({map:tex(st.t[0],st.t[1])}));f.position.y=-.1;f.receiveShadow=true;R.add(f)}box(3.2,.03,1.4,st.rug,0,.01,3.3,R);box(10,3,.3,st.wall[0],0,1.5,-4.15,R);box(.3,3,8,st.wall[1],-5.15,1.5,0,R);
 {const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.fillStyle=st.sc;g.fillRect(0,0,256,64);g.strokeStyle='#2b2d42';g.lineWidth=6;g.strokeRect(3,3,250,58);g.fillStyle=st.tx||'#2b2d42';g.font='bold 30px Arial';g.textAlign='center';g.fillText(st.sg,128,43);
 const m=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));m.position.set(0,2.4,-3.98);R.add(m);nb(4.3,1.3,.03,st.ac,0,2.4,-4.01,R)}
 const FX=FXS[s],shelves=LAY.map(L=>{const g=new THREE.Group();g.position.set(L[0],0,L[1]);g.rotation.y=L[2];R.add(g);box(1.8,.5,.7,FX.base,0,.25,0,g);
@@ -175,22 +177,56 @@ const FX=FXS[s],shelves=LAY.map(L=>{const g=new THREE.Group();g.position.set(L[0
 box(.08,2,.7,FX.p,-.9,1,0,g);box(.08,2,.7,FX.p,.9,1,0,g);box(.06,2,.7,FX.p,0,1,0,g);
 if(s==2)box(1.8,.03,.03,0xadb5bd,0,1.88,.2,g);if(s==3)box(1.8,.12,.8,0xe03131,0,2,0,g);if(s==1)box(1.6,.2,.04,0x69db7c,0,2,.33,g);
 const ig=[new THREE.Group(),new THREE.Group()];ig.forEach(i=>g.add(i));return{g,ig,k:[-1,-1]}});
-box(1.2,1,2.6,0x845ef7,3.9,.5,0,R);const reg=box(.6,.3,.5,0x212529,3.9,1.15,.4,R);
-const plants=[[4.4,3.4],[4.4,-3.2],[-4.4,3.8],[-2.2,3.6],[-.8,3.9]].map(([x,z])=>{const g=new THREE.Group();g.position.set(x,0,z);const a=new THREE.Mesh(new THREE.CylinderGeometry(.3,.22,.4,10),mat(0xc1440e));a.position.y=.2;const b=new THREE.Mesh(new THREE.SphereGeometry(.4,10,8),mat(0x2dc653));b.position.y=.75;g.add(a,b);g.visible=false;R.add(g);return g});
-const ca=person(s?0x12b886:0xab47bc,0x212121,R);ca.g.position.set(4.9,0,0);ca.g.rotation.y=ca.ry=-Math.PI/2;
+box(1.2,1,2.6,0x845ef7,3.9,.5,-.8,R);const reg=box(.6,.3,.5,0x212529,3.9,1.15,-.2,R);
+const plants=PLANTS.map(([x,z])=>{const g=new THREE.Group();g.position.set(x,0,z);const a=new THREE.Mesh(new THREE.CylinderGeometry(.3,.22,.4,10),mat(0xc1440e));a.position.y=.2;const b=new THREE.Mesh(new THREE.SphereGeometry(.4,10,8),mat(0x2dc653));b.position.y=.75;g.add(a,b);g.visible=false;R.add(g);return g});
+const ca=person(s?0x12b886:0xab47bc,0x212121,R);ca.g.position.set(4.95,0,-.8);ca.g.rotation.y=ca.ry=-Math.PI/2;
 return{R,shelves,plants,reg,ca}});
-const cars=[];
+/* ---------- NAVIGATION GRID + A* PATHFINDING ---------- */
+const CS=.4,GX=-6.4,GZ=-4.4,NW=32,NH=32,NAVS=[null,null,null,null];
+const gci=x=>Math.floor((x-GX)/CS),gcj=z=>Math.floor((z-GZ)/CS),gcx=i=>GX+(i+.5)*CS,gcz=j=>GZ+(j+.5)*CS;
+function navRects(s){const r=[[-7,-5,7,-3.95],[-7,-5,-4.95,4.1],[5.65,-5,7,4.5],[-5.65,4.1,-1.25,4.5],[1.25,4.1,5.65,4.5],[3.3,-2.1,4.5,.5],[-3.75,6,-2.25,6.8]];
+for(let i=0;i<cnt(s)/2;i++){const L=LAY[i],h=i>2?[.35,.9]:[.9,.35];r.push([L[0]-h[0],L[1]-h[1],L[0]+h[0],L[1]+h[1]])}
+PLANTS.forEach(([x,z],i)=>{if(i<S.up.decor)r.push([x-.3,z-.3,x+.3,z+.3])});FOOT[s].forEach(f=>r.push([f[0]-f[2],f[1]-f[3],f[0]+f[2],f[1]+f[3]]));return r}
+function navBuild(rs){const g=new Uint8Array(NW*NH);for(let j=0;j<NH;j++)for(let i=0;i<NW;i++){const x=gcx(i),z=gcz(j);for(const r of rs)if(x>r[0]-.34&&x<r[2]+.34&&z>r[1]-.34&&z<r[3]+.34){g[j*NW+i]=1;break}}return g}
+function buildNav(){for(let s=0;s<4;s++){const r=navRects(s);NAVS[s]=navBuild(r);NAVS[s].r=r}}
+const clearPt=(rs,x,z,m=.22)=>{for(const r of rs)if(x>r[0]-m&&x<r[2]+m&&z>r[1]-m&&z<r[3]+m)return false;return true};
+const gfree=(g,i,j)=>i>=0&&j>=0&&i<NW&&j<NH&&!g[j*NW+i];
+function gnear(g,i,j){i=clamp(i,0,NW-1);j=clamp(j,0,NH-1);if(gfree(g,i,j))return[i,j];for(let r=1;r<12;r++)for(let dj=-r;dj<=r;dj++)for(let di=-r;di<=r;di++){if(Math.max(Math.abs(di),Math.abs(dj))!=r)continue;if(gfree(g,i+di,j+dj))return[i+di,j+dj]}return[i,j]}
+function los(g,x0,z0,x1,z1){const d=Math.hypot(x1-x0,z1-z0),n=Math.ceil(d/.04);for(let k=1;k<=n;k++){const t=k/n;if(!clearPt(g.r,x0+(x1-x0)*t,z0+(z1-z0)*t,.3))return false}return true}
+function astar(g,sx,sz,tx,tz){const[si,sj]=gnear(g,gci(sx),gcj(sz)),[ti,tj]=gnear(g,gci(tx),gcj(tz)),N=NW*NH,gs=new Float32Array(N).fill(1e9),par=new Int32Array(N).fill(-1),cl=new Uint8Array(N),open=[];
+const push=(f,id)=>{open.push([f,id]);let k=open.length-1;while(k>0){const p=(k-1)>>1;if(open[p][0]<=open[k][0])break;[open[p],open[k]]=[open[k],open[p]];k=p}};
+const pop=()=>{const top=open[0],last=open.pop();if(open.length){open[0]=last;let k=0;for(;;){const l=2*k+1,r=l+1;let m=k;if(l<open.length&&open[l][0]<open[m][0])m=l;if(r<open.length&&open[r][0]<open[m][0])m=r;if(m==k)break;[open[m],open[k]]=[open[k],open[m]];k=m}}return top};
+const h=(i,j)=>{const a=Math.abs(i-ti),b=Math.abs(j-tj);return a+b-.586*Math.min(a,b)};
+const s0=sj*NW+si,t0=tj*NW+ti;gs[s0]=0;push(h(si,sj),s0);let found=false;
+while(open.length){const id=pop()[1];if(cl[id])continue;cl[id]=1;if(id==t0){found=true;break}const i=id%NW,j=(id/NW)|0;
+for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(!gfree(g,ni,nj))continue;if(di&&dj&&(!gfree(g,i+di,j)||!gfree(g,i,j+dj)))continue;const nid=nj*NW+ni,c=gs[id]+(di&&dj?1.414:1);if(c<gs[nid]){gs[nid]=c;par[nid]=id;push(c+h(ni,nj),nid)}}}
+if(!found)return[];const pts=[];for(let id=t0;id!=-1&&id!=s0;id=par[id])pts.push({x:gcx(id%NW),z:gcz((id/NW)|0)});pts.reverse();
+const out=[];let cx=sx,cz=sz,k=0;while(k<pts.length){let b=k;for(let m=pts.length-1;m>k;m--){if(los(g,cx,cz,pts[m].x,pts[m].z)){b=m;break}}cx=pts[b].x;cz=pts[b].z;out.push(pts[b]);k=b+1}
+if(gfree(g,gci(tx),gcj(tz))){const pw=out.length>1?out[out.length-2]:{x:sx,z:sz},ex={x:tx,z:tz};if(out.length&&los(g,pw.x,pw.z,tx,tz))out[out.length-1]=ex;else out.push(ex)}return out}
+const cars=[],MBW=new THREE.MeshBasicMaterial({color:0xffe9a8});
 function tree(R,x,z,k){const g=new THREE.Group();g.position.set(x,0,z);const t=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,.9,6),mat(0x8d6e63));t.position.y=.45;t.castShadow=true;g.add(t);
 [[1.3,.75,0x2f9e44],[1.9,.55,0x51cf66]].forEach(([y,r,c])=>{const m=new THREE.Mesh(new THREE.IcosahedronGeometry(r*k,0),mat(c));m.position.y=y*k;m.castShadow=true;g.add(m)});R.add(g)}
-function car(R,col,z,dir){const g=new THREE.Group();box(1.7,.5,.85,col,0,.45,0,g);box(.9,.4,.75,0xa5d8ff,-.1,.88,0,g);
-[[-.55,.45],[.55,.45],[-.55,-.45],[.55,-.45]].forEach(([x,w])=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.12,10),mat(0x212529));m.rotation.x=Math.PI/2;m.position.set(x,.2,w);g.add(m)});
-g.position.set(-14+Math.random()*28,-.1,z);g.rotation.y=dir>0?0:Math.PI;R.add(g);cars.push({g,dir,sp:2.5+Math.random()*2})}
-stores.forEach((x,s)=>{const R=x.R;box(14,.14,2,0xdee2e6,0,-.1,6.3,R);for(let i=-6;i<=6;i++)box(.9,.02,.14,0xffffff,i*2,-.13,10.5,R);
-[[-7.5,-4],[-7.5,2],[7.5,-3],[7.5,3.5],[-6.8,7.8],[6.8,7.8],[-9,5],[9,0]].forEach(([a,b],i)=>tree(R,a,b,.9+(i%3)*.15));
-[[-5.5,5.8],[5.5,5.8]].forEach(([a,b])=>{box(.1,2.2,.1,0x495057,a,1.1,b,R);const l=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),new THREE.MeshBasicMaterial({color:0xffe066}));l.position.set(a,2.3,b);R.add(l)});
-box(1.4,.1,.5,0x8d6e63,-3,.5,6.4,R);box(1.4,.5,.08,0x8d6e63,-3,.8,6.6,R);box(1.6,.03,.9,STORES[s].rug,0,.02,4.1,R);
+function car(R,s,col,z,dir,x){const g=new THREE.Group();box(1.7,.5,.85,col,0,.45,0,g);box(.9,.4,.75,0xa5d8ff,-.1,.88,0,g);
+[[-.55,.45],[.55,.45],[-.55,-.45],[.55,-.45]].forEach(([wx,w])=>{const m=new THREE.Mesh(G('c',.2,.12,0),mat(0x212529));m.rotation.x=Math.PI/2;m.position.set(wx,.2,w);g.add(m)});
+g.position.set(x,-.1,z);g.rotation.y=dir>0?0:Math.PI;R.add(g);cars.push({g,dir,s,lane:z,v:0,pv:0,sp:2.6+Math.random()*1.6})}
+stores.forEach((x,s)=>{const R=x.R,H=0x37b24d;
+box(16,.14,3.4,0xdee2e6,0,-.1,6.3,R);box(16,.14,2,0xdee2e6,0,-.1,14.6,R);box(.8,.2,8,0xe9ecef,5.4,-.1,0,R);
+for(let k=0;k<6;k++)box(.35,.02,5,0xffffff,-1.4+k*.56,-.13,10.5,R);for(let i=-7;i<=7;i++)if(Math.abs(i*2)>2)box(.9,.02,.14,0xffffff,i*2,-.13,10.5,R);
+box(4.4,.5,.4,H,-3.45,.25,4.3,R);box(4.4,.5,.4,H,3.45,.25,4.3,R);box(.4,.5,8.8,H,5.85,.25,.1,R);
+[[-7.5,-4],[-7.5,2],[7.6,-3],[7.6,3.5],[-7,7.6],[7,7.6],[-9,5],[9.2,0]].forEach(([a,b],i)=>tree(R,a,b,.9+(i%3)*.15));
+[[-5.5,5.8],[5.5,5.8]].forEach(([a,b])=>{box(.1,2.2,.1,0x495057,a,1.1,b,R);const l=new THREE.Mesh(G('s',.2,0,0),MBW);l.position.set(a,2.3,b);R.add(l)});
+box(1.4,.1,.5,0x8d6e63,-3,.5,6.4,R);box(1.4,.5,.08,0x8d6e63,-3,.8,6.6,R);
+box(1.4,.03,.6,[0x2f9e6f,0xcdb892,0xa9c7a5,0xcdb892][s],0,.02,4.0,R);
 box(1,1.2,.06,0xff8787,-3.6,2.2,-3.96,R);box(1,1.2,.06,0x74c0fc,3.6,2.2,-3.96,R);box(.06,.9,.9,0xffd43b,-4.97,2.1,-1.8,R);box(.06,.9,.9,0x69db7c,-4.97,2.1,1.2,R);
-car(R,[0xfa5252,0x339af0,0xfcc419,0x40c057][s],9.6,1);car(R,[0xf783ac,0x845ef7,0xff922b,0x15aabf][s],11.4,-1)});
+x.lamps=[-3.2,-.8,1.6].map(px=>{const g=new THREE.Group();g.position.set(px,0,-3.2);box(.02,.5,.02,0x495057,0,2.75,0,g);const b=new THREE.Mesh(G('s',.15,0,0),MBW);b.position.y=2.45;g.add(b);g.visible=false;R.add(g);return g});
+const col=[[0xfa5252,0x339af0,0xfcc419,0x40c057],[0xf783ac,0x845ef7,0xff922b,0x15aabf]];
+car(R,s,col[0][s],9.7,1,-12);car(R,s,col[1][s],9.7,1,2);car(R,s,col[1][s],11.5,-1,12);car(R,s,col[0][s],11.5,-1,-3)});
+const carNear=(s,x,d=3.2)=>cars.some(k=>k.s==s&&Math.abs(k.g.position.x-x)<d);
+function carsUpd(dt){cars.forEach(c=>{if(!S.own[c.s])return;const p=c.g.position,d=c.dir;let go=c.sp;
+for(const o of C){if(o.s!=c.s||!o.road)continue;const dx=(o.g.position.x-p.x)*d;if(dx>-.9&&dx<3.0){go=0;break}}
+if(go)for(const o of cars){if(o===c||o.s!=c.s||o.lane!=c.lane)continue;const dx=(o.g.position.x-p.x)*d;if(dx>0&&dx<2.7){go=Math.min(go,o.v*.9);if(dx<2.1)go=0}}
+c.v+=Math.max(-9*dt,Math.min(4*dt,go-c.v));c.g.rotation.z=Math.max(-.06,Math.min(.06,-(c.v-c.pv)*.35*d));c.pv=c.v;p.x+=d*c.v*dt;
+if(p.x*d>16){if(!cars.some(o=>o!==c&&o.s==c.s&&o.lane==c.lane&&Math.abs(o.g.position.x+16*d)<3.2))p.x=-16*d;else p.x=16*d}})}
 /* ---------- LOW-POLY PRODUCT MODELS (each product = ONE merged mesh, shared geometry) ---------- */
 const K={
 box:[['b',.3,.26,.28,'$',0,.13,0],['b',.2,.05,.02,0xffffff,0,.15,.145]],
@@ -254,67 +290,78 @@ for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(m);pos.push(v
 for(let i=0;i<g.index.count;i++)idx.push(g.index.getX(i)+o);o+=p.count});
 const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));bg.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));bg.setAttribute('color',new THREE.Float32BufferAttribute(clr,3));bg.setIndex(idx);return IG[key]=bg}
 function item(k,col){const m=new THREE.Mesh(itemGeo(k,col),VM);m.castShadow=true;return m}
-const pItem=(s,pi)=>{const p=STORES[s].P[pi];return item(KD[p.id]||'box',p.c)};
+const vary=(c,n)=>{if(!n)return c;const r=c>>16&255,g=c>>8&255,b=c&255,m=n%3;return m==1?(g<<16)|(b<<8)|r:m==2?(b<<16)|(r<<8)|g:c};
+const pItem=(s,pi,n)=>{const p=STORES[s].P[pi];return item(KD[p.id]||'box',vary(p.c,n))};
 /* ---------- SHOP-SPECIFIC DECOR (each shop has its own identity) ---------- */
 const TM=new THREE.MeshLambertMaterial({color:0x4dabf7,transparent:true,opacity:.45}),fish=[];
 function mannequin(R,x,z,col){const g=new THREE.Group();g.position.set(x,0,z);box(.5,.05,.5,0x868e96,0,.025,0,g);box(.06,.9,.06,0x868e96,0,.5,0,g);
 const b=new THREE.Mesh(G('c',.2,.7,0),mat(col));b.position.y=1.1;b.castShadow=true;g.add(b);const h=new THREE.Mesh(G('s',.15,0,0),mat(0xe9ecef));h.position.y=1.65;g.add(h);R.add(g)}
-const tbl=(R,x,z,c,w=1.3)=>{box(w,.55,.9,c,x,.275,z,R)};
+const tbl=(R,x,z,c,w=1.3)=>{box(w,.55,.9,c,x,.275,z,R)},put=(R,it,x,y,z,k=1)=>{it.position.set(x,y,z);it.scale.setScalar(k);R.add(it)};
+const FOOT=[[[4.4,-3,.15,.7],[2.2,3.3,.65,.45]],[[3.9,-3,.65,.45],[2.2,3.3,.65,.45]],[[3.3,-3.2,.3,.3],[4.2,-3.2,.3,.3],[2.2,3.3,.65,.45]],[[3.8,-3.1,.7,.45],[2.2,3.3,.5,.5],[1.5,3.3,.2,.2],[2.9,3.3,.2,.2]]];
 const EXTRA=[
 R=>{nb(10,.05,.05,0x00e5ff,0,2.9,-3.95,R);nb(.05,.05,8,0xff66c4,-4.95,2.9,0,R);nb(10,.04,.04,0xff66c4,0,.1,-3.96,R);
-box(.1,.15,.1,0x495057,3.9,1.07,-.8,R);box(.05,.35,.5,0x212529,3.9,1.3,-.8,R);nb(.02,.28,.42,0x00e5ff,3.99,1.3,-.8,R);
-tbl(R,2.4,3,0x3b3f72);nb(1.3,.03,.03,0x00e5ff,2.4,.5,3.46,R);[-.4,0,.4].forEach((o,i)=>{const p=item('phone',[0xff5d8f,0x4dabf7,0xffd43b][i]);p.position.set(2.4+o,.55,3);R.add(p)});
-box(.15,1.9,1.4,0x1b1464,4.85,.95,-2.6,R);nb(.02,1.5,1.1,0xff66c4,4.76,1.0,-2.6,R);const h=item('buds',0x00e5ff);h.position.set(4.2,0,-1.9);h.scale.setScalar(2);R.add(h)},
-R=>{nb(10,.05,.05,0x69db7c,0,2.9,-3.95,R);box(1.3,.6,.9,0x7f5539,4.2,.3,-2.9,R);const w=new THREE.Mesh(G('b',1.2,.7,.8),TM);w.position.set(4.2,.95,-2.9);R.add(w);box(1.2,.08,.8,0xf4e285,4.2,.64,-2.9,R);
-[[3.8,-3.1],[4.5,-2.7]].forEach(([x,z])=>{const g=new THREE.Mesh(G('s',.18,0,0),mat(0x2dc653));g.position.set(x,.8,z);R.add(g)});
-[0,1,2].forEach(i=>{const f=item('fish',[0xff922b,0xffd43b,0xf06595][i]);f.position.set(4.2,.9+i*.12,-2.9+(i-1)*.2);R.add(f);fish.push({m:f,x0:4.2,ph:i*2.1})});
-tbl(R,2.4,3,0xb08968);const c=item('cage',0xffd43b);c.scale.setScalar(1.6);c.position.set(1.95,.55,3);R.add(c);const bw=item('bowl',0xff6b6b);bw.position.set(2.65,.55,3.1);R.add(bw);const bd=item('bed',0xda77f2);bd.position.set(2.95,.55,2.8);R.add(bd)},
-R=>{nb(10,.05,.05,0xff66c4,0,2.9,-3.95,R);mannequin(R,3.5,-3,0xf06595);mannequin(R,4.5,-3,0x4263eb);box(.08,1.5,.9,0xa5d8ff,4.95,1,-.6,R);
-tbl(R,2.4,3,0xffffff);[0xf06595,0x4dabf7,0xffd43b].forEach((c,i)=>{for(let k=0;k<3;k++)box(.4,.09,.3,c,1.95+i*.45,.6+k*.09,3,R)});const s=item('shoe',0xff6b6b);s.position.set(2.4,.55,3.35);s.scale.setScalar(1.3);R.add(s);const cp=item('cap',0x4dabf7);cp.position.set(2.9,.55,3.3);cp.scale.setScalar(1.3);R.add(cp)},
-R=>{nb(10,.05,.05,0xffa94d,0,2.9,-3.95,R);const b=item('burger',0);b.position.set(3.9,1,-.8);b.scale.setScalar(1.3);R.add(b);const c=item('cup',0xff6b6b);c.position.set(3.9,1,.9);c.scale.setScalar(1.2);R.add(c);
-box(1.4,.9,.9,0xced4da,4.1,.45,-2.9,R);nb(.8,.04,.6,0xff6b35,4.1,.92,-2.9,R);box(1.4,.3,.9,0x868e96,4.1,2.4,-2.9,R);box(2,1.1,.05,0x2b2d42,-.2,2.1,-3.95,R);[0,1,2].forEach(i=>nb(1.5-i*.3,.06,.02,[0xffd43b,0xff8787,0x69db7c][i],-.2,2.35-i*.28,-3.92,R));
-const t=new THREE.Mesh(G('c',.5,.6,0),mat(0xffffff));t.position.set(2.4,.3,3);t.castShadow=true;R.add(t);const p=item('pizza',0xf59f00);p.position.set(2.4,.6,3);R.add(p);
-[1.6,3.2].forEach(x=>{const st=new THREE.Mesh(G('c',.2,.4,0),mat(0xe03131));st.position.set(x,.2,3);R.add(st)});const d=item('cup',0x4dabf7);d.position.set(2.75,.6,3.2);R.add(d)}];
+box(.1,.15,.1,0x495057,4.1,1.07,-1.3,R);box(.05,.35,.5,0x212529,4.1,1.3,-1.3,R);nb(.02,.28,.42,0x00e5ff,4.14,1.3,-1.3,R);
+tbl(R,2.2,3.3,0x3b3f72);nb(1.3,.03,.03,0x00e5ff,2.2,.5,3.76,R);[-.4,0,.4].forEach((o,i)=>put(R,item('phone',[0xff5d8f,0x4dabf7,0xffd43b][i]),2.2+o,.55,3.3));
+box(.15,1.9,1.4,0x1b1464,4.4,.95,-3,R);nb(.02,1.5,1.1,0xff66c4,4.3,1.0,-3,R)},
+R=>{nb(10,.05,.05,0x69db7c,0,2.9,-3.95,R);box(1.3,.6,.9,0x7f5539,3.9,.3,-3,R);const w=new THREE.Mesh(G('b',1.2,.7,.8),TM);w.position.set(3.9,.95,-3);R.add(w);box(1.2,.08,.8,0xf4e285,3.9,.64,-3,R);
+[[3.5,-3.2],[4.2,-2.8]].forEach(([a,b])=>{const g=new THREE.Mesh(G('s',.18,0,0),mat(0x2dc653));g.position.set(a,.8,b);R.add(g)});
+[0,1,2].forEach(i=>{const f=item('fish',[0xff922b,0xffd43b,0xf06595][i]);f.position.set(3.9,.9+i*.12,-3+(i-1)*.2);R.add(f);fish.push({m:f,x0:3.9,ph:i*2.1})});
+tbl(R,2.2,3.3,0xb08968);put(R,item('cage',0xffd43b),1.75,.55,3.3,1.6);put(R,item('bowl',0xff6b6b),2.45,.55,3.4);put(R,item('bed',0xda77f2),2.75,.55,3.1)},
+R=>{nb(10,.05,.05,0xff66c4,0,2.9,-3.95,R);mannequin(R,3.3,-3.2,0xf06595);mannequin(R,4.2,-3.2,0x4263eb);box(.06,1.4,.8,0xa5d8ff,-4.97,1.2,3.4,R);
+tbl(R,2.2,3.3,0xffffff);[0xf06595,0x4dabf7,0xffd43b].forEach((c,i)=>{for(let k=0;k<3;k++)box(.4,.09,.3,c,1.8+i*.45,.6+k*.09,3.2,R)});put(R,item('shoe',0xff6b6b),2.0,.55,3.6,1.3);put(R,item('cap',0x4dabf7),2.6,.55,3.6,1.3)},
+R=>{nb(10,.05,.05,0xffa94d,0,2.9,-3.95,R);put(R,item('burger',0),3.9,1,-1.5,1.3);put(R,item('cup',0xff6b6b),3.9,1,.1,1.2);
+box(1.4,.9,.9,0xced4da,3.8,.45,-3.1,R);nb(.8,.04,.6,0xff6b35,3.8,.92,-3.1,R);box(1.4,.3,.9,0x868e96,3.8,2.4,-3.1,R);box(2,1.1,.05,0x2b2d42,-.2,2.1,-3.95,R);[0,1,2].forEach(i=>nb(1.5-i*.3,.06,.02,[0xffd43b,0xff8787,0x69db7c][i],-.2,2.35-i*.28,-3.92,R));
+const t=new THREE.Mesh(G('c',.5,.6,0),mat(0xffffff));t.position.set(2.2,.3,3.3);t.castShadow=true;R.add(t);put(R,item('pizza',0xf59f00),2.2,.6,3.3);
+[1.5,2.9].forEach(sx=>{const st=new THREE.Mesh(G('c',.2,.4,0),mat(0xe03131));st.position.set(sx,.2,3.3);R.add(st)});put(R,item('cup',0x4dabf7),2.55,.6,3.45)}];
 stores.forEach((x,s)=>EXTRA[s](x.R));
-/* doors, workers, delivery */
+stores.forEach((x,s)=>{const R=x.R;x.deco=[];const dg=(lv,f)=>{const g=new THREE.Group();R.add(g);f(g);g.visible=false;x.deco.push({g,lv})},ac=STORES[s].ac;
+dg(2,g=>{const c=new THREE.Mesh(G('c',.3,.06,0),mat(0xffffff));c.rotation.z=Math.PI/2;c.position.set(-4.93,2.35,-3.2);g.add(c);box(.03,.2,.03,0x212529,-4.9,2.4,-3.2,g);box(.03,.03,.14,0x212529,-4.9,2.35,-3.14,g)});
+dg(3,g=>{for(let i=0;i<10;i++){const px=-4.4+i*.9;if(Math.abs(px)>2.3)box(.3,.22,.02,[0xff6b6b,0xffd43b,0x69db7c,0x4dabf7,0xda77f2][i%5],px,2.72,-3.93,g)}});
+dg(4,g=>{nb(.04,.06,1.1,ac,-4.96,2.58,2.4,g);nb(.04,.5,.06,ac,-4.96,2.3,1.88,g);nb(.04,.5,.06,ac,-4.96,2.3,2.92,g)});
+dg(5,g=>{box(.2,.05,.2,0x6d4c41,4.1,1.03,.2,g);const t=new THREE.Mesh(G('c',.07,.18,0),mat(0xffd43b));t.position.set(4.1,1.15,.2);g.add(t);const b=new THREE.Mesh(G('s',.1,0,0),mat(0xffd43b));b.position.set(4.1,1.3,.2);g.add(b)})});
+
+/* doors, workers, delivery, cashier marker */
 const DM=new THREE.MeshLambertMaterial({color:0x9be7ff,transparent:true,opacity:.3});
 const doors=stores.map((x,s)=>{const R=x.R;box(.12,2.4,.12,0x495057,-1.3,1.2,4.3,R);box(.12,2.4,.12,0x495057,1.3,1.2,4.3,R);box(2.7,.1,.12,0x495057,0,2.4,4.3,R);nb(2.5,.05,.05,STORES[s].ac,0,2.3,4.3,R);
 const a=new THREE.Mesh(G('b',1.1,2.1,.05),DM),b=new THREE.Mesh(G('b',1.1,2.1,.05),DM);a.position.set(-.6,1.05,4.3);b.position.set(.6,1.05,4.3);R.add(a,b);return{a,b,o:0}});
-const wks=stores.map((x,s)=>{const w=person([0x20c997,0xfab005,0xcc5de8,0xff6b6b][s],0x212121,x.R);w.g.position.set(4.9,0,-3.3);w.st='idle';w.tm=3+Math.random()*4;return w});
-function wkUpd(w,s,dt){const R=stores[s].R;
-if(w.st=='idle'){w.tm-=dt;w.look=1;if(w.tm<=0){w.look=0;w.st='carry';w.sl=Math.random()*(cnt(s)/2)|0;w.it=item('box',STORES[s].P[Math.random()*cnt(s)|0].c);w.it.position.set(0,.95,.45);w.g.add(w.it);w.reach=1}}
-else if(w.st=='carry'){if(mv(w,LAY[w.sl][3],LAY[w.sl][4],dt,1.8)){w.st='stock';w.tm=1.5;w.ry=LAY[w.sl][5]}}
-else if(w.st=='stock'){w.tm-=dt;if(w.tm<=0){w.g.remove(w.it);w.it=null;w.reach=0;w.hop=.5;w.st='back'}}
-else if(w.st=='back'){if(mv(w,4.9,-3.3,dt,1.8)){w.st='idle';w.tm=6+Math.random()*8}}}
+const ring=new THREE.Mesh(G('c',.45,.03,0),new THREE.MeshBasicMaterial({color:0x69db7c,transparent:true,opacity:.75}));ring.position.set(5,.03,-.8);stores[0].R.add(ring);
+const wks=stores.map((x,s)=>{const w=person([0x20c997,0xfab005,0xcc5de8,0xff6b6b][s],0x212121,x.R);w.s=s;w.g.position.set(5,0,-3.2);w.st='idle';w.tm=3+Math.random()*4;return w});
+function wkUpd(w,s,dt){
+if(w.st=='idle'){w.tm-=dt;w.look=1;if(w.tm<=0){w.look=0;setSt(w,'carry');w.sl=Math.random()*(cnt(s)/2)|0;w.it=item('box',STORES[s].P[Math.random()*cnt(s)|0].c);w.it.position.set(0,.95,.45);w.g.add(w.it);w.reach=1}}
+else if(w.st=='carry'){const b=LAY[w.sl];if(go(w,b[3],b[4],dt,1.8)){setSt(w,'stock');w.tm=1.5;w.ry=b[5]}}
+else if(w.st=='stock'){w.tm-=dt;if(w.tm<=0){w.g.remove(w.it);w.it=null;w.reach=0;w.hop=.5;setSt(w,'back')}}
+else if(w.st=='back'){if(go(w,5,-3.2,dt,1.8)){setSt(w,'idle');w.tm=6+Math.random()*8}}}
 function van(R,col){const g=new THREE.Group();box(2.1,1,.95,0xf8f9fa,0,.75,0,g);box(.7,.75,.9,col,1.4,.6,0,g);box(2.1,.2,.96,col,0,.4,0,g);
-[[-.6,.5],[-.6,-.5],[1.2,.5],[1.2,-.5]].forEach(([x,z])=>{const m=new THREE.Mesh(G('c',.25,.12,0),mat(0x212529));m.rotation.x=Math.PI/2;m.position.set(x,.25,z);g.add(m)});g.position.set(-20,-.1,8.4);R.add(g);return g}
-const dvs=stores.map((x,s)=>{const w=person(0xff922b,0x212121,x.R);w.g.visible=false;return{v:van(x.R,[0xfa5252,0x339af0,0xf783ac,0xffa94d][s]),w,st:'wait',tm:10+Math.random()*25,k:0,cr:null}});
+[[-.6,.5],[-.6,-.5],[1.2,.5],[1.2,-.5]].forEach(([x,z])=>{const m=new THREE.Mesh(G('c',.25,.12,0),mat(0x212529));m.rotation.x=Math.PI/2;m.position.set(x,.25,z);g.add(m)});g.position.set(-22,-.1,8.5);R.add(g);return g}
+const dvs=stores.map((x,s)=>{const w=person(0xff922b,0x212121,x.R);w.s=s;w.g.visible=false;return{v:van(x.R,[0xfa5252,0x339af0,0xf783ac,0xffa94d][s]),w,st:'wait',tm:10+Math.random()*25,k:0,cr:null}});
+const callVan=s=>{const d=dvs[s];if(d.st=='wait')d.tm=.3};
 function dvUpd(d,s,dt){const v=d.v.position,w=d.w,R=stores[s].R;
 if(d.st=='wait'){d.tm-=dt;if(d.tm<=0){d.st='drive';v.x=-16}}
-else if(d.st=='drive'){v.x+=5*dt;if(v.x>=-1.6){v.x=-1.6;d.st='out';d.k=0;w.g.visible=true;w.g.position.set(v.x+.4,0,7.7);w.it=item('box',0xfab005);w.it.position.set(0,.95,.45);w.g.add(w.it);w.reach=1}}
-else if(d.st=='out'){const t=[[0,4.8],[1.4,3.1]][d.k];if(mv(w,t[0],t[1],dt,1.9)){d.k++;if(d.k>1){w.g.remove(w.it);w.it=null;w.reach=0;d.cr=item('box',0xfab005);d.cr.scale.setScalar(1.7);d.cr.position.set(1,0,3.1);R.add(d.cr);d.st='drop';d.tm=1;sfx&&cur==s&&sfx('restock')}}}
-else if(d.st=='drop'){d.tm-=dt;if(d.tm<=0){d.st='ret';d.k=0}}
-else if(d.st=='ret'){const t=[[0,4.8],[v.x+.4,7.7]][d.k];if(mv(w,t[0],t[1],dt,2.2)){d.k++;if(d.k>1){w.g.visible=false;R.remove(d.cr);d.cr=null;d.st='leave'}}}
-else if(d.st=='leave'){v.x+=5*dt;if(v.x>18){v.x=-20;d.st='wait';d.tm=30+Math.random()*40}}}
+else if(d.st=='drive'){v.x+=5*dt;if(v.x>=-4.8){v.x=-4.8;d.st='out';d.k=0;w.g.visible=true;w.g.position.set(v.x+.4,0,7.7);w.dst=null;w.it=item('box',0xfab005);w.it.position.set(0,.95,.45);w.g.add(w.it);w.reach=1}}
+else if(d.st=='out'){const t=[[0,4.9],[3.6,3.0]][d.k];if(go(w,t[0],t[1],dt,1.9)){d.k++;if(d.k>1){w.g.remove(w.it);w.it=null;w.reach=0;d.cr=item('box',0xfab005);d.cr.scale.setScalar(1.7);d.cr.position.set(3.8,0,3.5);R.add(d.cr);d.st='drop';d.tm=1;if(cur==s)sfx('restock')}}}
+else if(d.st=='drop'){d.tm-=dt;if(d.tm<=0){d.st='ret';d.k=0;w.dst=null}}
+else if(d.st=='ret'){const t=[[0,4.9],[v.x+.4,7.7]][d.k];if(go(w,t[0],t[1],dt,2.2)){d.k++;w.dst=null;if(d.k>1){w.g.visible=false;R.remove(d.cr);d.cr=null;d.st='leave'}}}
+else if(d.st=='leave'){v.x+=5*dt;if(v.x>18){v.x=-22;d.st='wait';d.tm=30+Math.random()*40}}}
 function lifeUpd(dt){stores.forEach((x,s)=>{if(!S.own[s])return;wkUpd(wks[s],s,dt);anim(wks[s],dt);dvUpd(dvs[s],s,dt);anim(dvs[s].w,dt);
-const near=C.some(c=>c.s==s&&Math.abs(c.g.position.z-4.3)<1.8&&Math.abs(c.g.position.x)<1.8)||(s==0&&Math.abs(pl.g.position.z-4.3)<1.8&&Math.abs(pl.g.position.x)<1.8)||(dvs[s].w.g.visible&&Math.abs(dvs[s].w.g.position.z-4.3)<1.8),d=doors[s];
+const near=C.some(c=>c.s==s&&Math.abs(c.g.position.z-4.3)<1.8&&Math.abs(c.g.position.x)<1.8)||(s==0&&Math.abs(pl.g.position.z-4.3)<1.8&&Math.abs(pl.g.position.x)<1.8)||(dvs[s].w.g.visible&&Math.abs(dvs[s].w.g.position.z-4.3)<1.8)||(Math.abs(wks[s].g.position.z-4.3)<1.8&&Math.abs(wks[s].g.position.x)<1.8),d=doors[s];
 d.o+=((near?1:0)-d.o)*Math.min(1,dt*6);d.a.position.x=-.6-d.o*.55;d.b.position.x=.6+d.o*.55});
+ring.visible=!!S.own[0]&&!(S.up.cashier>0);ring.scale.setScalar(1+Math.sin(TT*4)*.08);
 fish.forEach(f=>{f.m.position.x=f.x0+Math.sin(TT*1.2+f.ph)*.35;f.m.rotation.y=Math.cos(TT*1.2+f.ph)>0?0:Math.PI})}
 function shelf(s,pi){const p=STORES[s].P[pi],st=S.prod[p.id].stock,k=st<=0?0:Math.max(1,Math.ceil(st/mx()*6)),sl=stores[s].shelves[pi>>1],h=pi&1;if(sl.k[h]==k)return;sl.k[h]=k;sl.ig[h].clear();
-for(let n=0;n<k;n++){const it=pItem(s,pi);it.position.set((h?.45:-.45)+((n%2)-.5)*.4,.54+(n>>1)*.5,0);sl.ig[h].add(it)}}
-function applyUp(){stores.forEach((x,s)=>{x.R.visible=!!S.own[s];x.plants.forEach((g,i)=>g.visible=i<S.up.decor);x.shelves.forEach((sl,i)=>{sl.g.visible=i<cnt(s)/2;sl.k=[-1,-1]});STORES[s].P.forEach((p,i)=>shelf(s,i))});stores[0].ca.g.visible=S.up.cashier>0;stores.forEach((x,s)=>{if(s)x.ca.g.visible=true})}
+for(let n=0;n<k;n++){const it=pItem(s,pi,n);it.position.set((h?.45:-.45)+((n%2)-.5)*.4,.54+(n>>1)*.5,0);sl.ig[h].add(it)}}
+function applyUp(){stores.forEach((x,s)=>{x.R.visible=!!S.own[s];(x.lamps||[]).forEach((l,i)=>l.visible=S.up.decor>i);(x.deco||[]).forEach(d=>d.g.visible=S.up.decor>=d.lv);x.plants.forEach((g,i)=>g.visible=i<S.up.decor);x.shelves.forEach((sl,i)=>{sl.g.visible=i<cnt(s)/2;sl.k=[-1,-1]});STORES[s].P.forEach((p,i)=>shelf(s,i))});stores[0].ca.g.visible=S.up.cashier>0;stores.forEach((x,s)=>{if(s)x.ca.g.visible=true});buildNav()}
 const pl=person(0x2979ff,0x3e2723,stores[0].R),plT={x:2,z:2};pl.g.position.set(2,0,2);
 function mv(o,x,z,dt,sp=2.4){const p=o.g.position,dx=x-p.x,dz=z-p.z,d=Math.hypot(dx,dz);if(d<.04)return true;const st=Math.min(sp*dt,d);p.x+=dx/d*st;p.z+=dz/d*st;o.ry=Math.atan2(dx,dz);o.mov=1;return d-st<.04}
 let TT=0;
 function anim(o,dt){const s=Math.sin(o.t);
 if(o.mov){o.t+=dt*10;o.legs[0].rotation.x=s*.7;o.legs[1].rotation.x=-s*.7;o.arms[0].rotation.x=-s*.6;o.arms[1].rotation.x=s*.6;o.body.position.y=.85+Math.abs(s)*.07;o.body.rotation.z=s*.06;o.body.rotation.x=.12}
 else{o.legs[0].rotation.x=o.legs[1].rotation.x=0;o.body.rotation.z=0;o.body.rotation.x=0;const b=Math.sin(TT*2+o.g.id)*.02;o.body.position.y=.85+b;o.arms[0].rotation.x=b*5;o.arms[1].rotation.x=o.reach?-1.5+Math.sin(TT*8)*.15:-b*5}
-o.head.rotation.y=o.look?Math.sin(TT*3+o.g.id)*.6:0;
+o.head.rotation.y=o.look?Math.sin(TT*3+o.g.id)*.6:0;if(o.arg){o.arms[0].rotation.x=-2.4+Math.sin(TT*14)*.5;o.arms[1].rotation.x=-2.4+Math.cos(TT*14)*.5;o.body.rotation.z=Math.sin(TT*18)*.1;o.head.rotation.y=Math.sin(TT*12)*.5}
 if(o.hop>0){o.hop-=dt;o.g.position.y=Math.sin(Math.max(0,o.hop)/.5*Math.PI)*.45}else o.g.position.y=0;
 const d=((o.ry-o.g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;o.g.rotation.y+=d*Math.min(1,dt*12);o.mov=0}
 const fxs=[];
-function fly(s,pi){const R=stores[s].R,a=stores[s].shelves[pi>>1].g.position,m=pItem(s,pi);m.position.set(a.x,1.1,a.z);R.add(m);fxs.push({m,a:m.position.clone(),b:new THREE.Vector3(3.9,1.4,.3),t:0,d:.7,k:0,R});
-for(let n=0;n<4;n++){const c=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.04,10),mat(0xffd700));c.rotation.x=Math.PI/2;c.position.set(3.9,1.3,.4);c.visible=false;R.add(c);fxs.push({m:c,a:c.position.clone(),b:new THREE.Vector3(3.9+(n-1.5)*.35,2.7,.4),t:-(.7+n*.06),d:.8,k:1,R})}stores[s].reg.scale.setScalar(1.5)}
+function fly(s,pi){const R=stores[s].R,a=stores[s].shelves[pi>>1].g.position,m=pItem(s,pi);m.position.set(a.x,1.1,a.z);R.add(m);fxs.push({m,a:m.position.clone(),b:new THREE.Vector3(3.9,1.4,-.4),t:0,d:.7,k:0,R});
+for(let n=0;n<4;n++){const c=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.04,10),mat(0xffd700));c.rotation.x=Math.PI/2;c.position.set(3.9,1.3,-.3);c.visible=false;R.add(c);fxs.push({m:c,a:c.position.clone(),b:new THREE.Vector3(3.9+(n-1.5)*.35,2.7,-.3),t:-(.7+n*.06),d:.8,k:1,R})}stores[s].reg.scale.setScalar(1.5)}
 function fxUpd(dt){stores.forEach(x=>x.reg.scale.setScalar(x.reg.scale.x+(1-x.reg.scale.x)*Math.min(1,dt*8)));
 for(let i=fxs.length-1;i>=0;i--){const f=fxs[i];f.t+=dt;if(f.t<0)continue;f.m.visible=true;const u=Math.min(1,f.t/f.d);f.m.position.lerpVectors(f.a,f.b,u);
 if(f.k==0){f.m.position.y+=Math.sin(u*Math.PI)*1.2;f.m.rotation.y+=dt*8}else{f.m.rotation.z+=dt*14;f.m.scale.setScalar(1-u*.6)}
@@ -328,35 +375,62 @@ if(k==0){A(sp,0x6d4c41,-.22,.6,.35,.25,.5,.25);A(sp,0x6d4c41,.22,.6,.35,.25,.5,.
 if(k==1){A(cn,col,-.15,.95,.4,1,1,1);A(cn,col,.15,.95,.4,1,1,1);A(sp,col,0,.5,-.5,.15,.15,.9)}
 if(k==2){A(sp,0xffa8a8,-.2,.9,.38,.3,.3,.3);A(sp,0xffa8a8,.2,.9,.38,.3,.3,.3)}
 if(k==3){const b=A(cn,0xff922b,0,.62,.72,1,1,1);b.rotation.x=Math.PI/2;A(sp,0xfab005,-.27,.4,0,.15,.5,.8);A(sp,0xfab005,.27,.4,0,.15,.5,.8)}
-g.scale.setScalar([1,.8,.5,.5][k]);g.position.set(-3+Math.random()*5,0,1.8+Math.random()*1.5);R.add(g);pets.push({g,k,tx:0,tz:2,w:Math.random()*2,t:0})}
+g.scale.setScalar([1,.8,.5,.5][k]);g.position.set(-2.6+Math.random()*2.1,0,2.3+Math.random()*1.2);R.add(g);pets.push({g,k,tx:0,tz:2,w:Math.random()*2,t:0})}
 [[0,0xc68b59],[1,0x868e96],[2,0xffc078],[3,0xffe066]].forEach(([k,c])=>animal(k,c,stores[1].R));
 function petUpd(a,dt){a.w-=dt;if(a.w>0){a.g.position.y=0;return}const dx=a.tx-a.g.position.x,dz=a.tz-a.g.position.z,d=Math.hypot(dx,dz);
-if(d<.1){a.w=1+Math.random()*3;a.tx=-4+Math.random()*7;a.tz=1.6+Math.random()*2;a.g.position.y=0;return}
+if(d<.1){a.w=1+Math.random()*3;a.tx=-2.6+Math.random()*2.1;a.tz=2.3+Math.random()*1.2;a.g.position.y=0;return}
 const st=Math.min((a.k==2?1.3:.9)*dt,d);a.g.position.x+=dx/d*st;a.g.position.z+=dz/d*st;a.t+=dt*(a.k==3?12:9);a.g.position.y=Math.abs(Math.sin(a.t))*(a.k==3?.3:.1);
 a.g.rotation.y+=(((Math.atan2(dx,dz)-a.g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI)*Math.min(1,dt*8)}
 /* ---------- CUSTOMERS ---------- */
-const C=[],Q=[[],[],[],[]],spT=[1,3,5,7],wv=new THREE.Vector3();
+const C=[],Q=[[],[],[],[]],spT=[1,3,5,7],wv=new THREE.Vector3(),RES={},NAMES=['Karen','Chad','Big Mike','Fancy Fiona','Dave','Sheila','Bargain Bob','Priya'],CWZ=7.95;
 function pop(t,g,cls=''){g.getWorldPosition(wv);wv.y=2.2;wv.project(cam);const d=document.createElement('div');d.className='pop '+cls;d.textContent=t;d.style.left=(wv.x*.5+.5)*innerWidth+'px';d.style.top=(-wv.y*.5+.5)*innerHeight+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1200)}
-function spawn(s){const o=person([0xff7043,0x26a69a,0xffca28,0x7e57c2,0x66bb6a,0xec407a][Math.random()*6|0],[0x212121,0x6d4c41,0xffd54f][Math.random()*3|0],stores[s].R);
-o.g.position.set(Math.random()-.5,0,12);o.st='door';o.s=s;o.jx=(Math.random()-.5)*1.4;o.sp=1.9+Math.random()*.8;o.pi=Math.random()*cnt(s)|0;o.wtp=(.75+Math.random()*.75)*(1+.06*S.up.decor);C.push(o)}
-function bad(c,t,r){pop(t,c.g,'bad');S.rep=Math.max(.5,S.rep-r);c.st='leave'}
-const staffed=s=>s>0||S.up.cashier>0||Math.hypot(pl.g.position.x-3.9,pl.g.position.z)<2.8;
-function updC(c,dt){const s=c.s,q=Q[s],p=STORES[s].P[c.pi],ps=S.prod[p.id];
-if(c.st=='door'){if(mv(c,c.jx,4.6,dt,c.sp)){c.st='shelf';if(cur==s)sfx('enter')}}
-else if(c.st=='shelf'){const b=bs(c.pi);if(mv(c,b[0],b[1],dt,c.sp)){c.st='browse';c.tm=1.4+Math.random();c.look=1;c.reach=1;c.ry=LAY[c.pi>>1][5];pop(p.e,c.g)}}
-else if(c.st=='browse'){c.tm-=dt;if(c.tm<=0){c.look=0;c.reach=0;if(ps.stock<=0)bad(c,'😠 Out of '+p.n,.03);else if(ps.price/p.ref>c.wtp)bad(c,'💸 Too pricey!',.01);else if(q.length>=4)bad(c,'😤 Too crowded',.01);else{q.push(c);c.st='queue';c.srv=0;c.it=pItem(s,c.pi);c.it.position.set(0,.95,.4);c.it.scale.setScalar(.85);c.g.add(c.it);c.reach=1}}}
-else if(c.st=='queue'){const i=q.indexOf(c),at=mv(c,3.9,1.9+i*.95,dt,c.sp);
-if(i==0&&at){c.ry=Math.PI;if(staffed(s)){c.srv+=dt;stores[s].ca.reach=1;if(c.srv>=coTime()){q.shift();if(c.it){c.g.remove(c.it);c.it=null}c.reach=0;if(ps.stock<=0)bad(c,'😠 Sold out!',.03);else{pop('+$'+sale(p),c.g);if(cur==s)sfx('cash');fly(s,c.pi);c.hop=.5;c.st='leave';shelf(s,c.pi)}}}}}
-else if(c.st=='leave'){if(mv(c,c.jx,4.6,dt,c.sp))c.st='out'}
-else if(c.st=='out'){if(mv(c,c.jx,13,dt,c.sp)){c.g.parent.remove(c.g);C.splice(C.indexOf(c),1)}}}
-/* ---------- INPUT ---------- */
-const rc=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
-ren.domElement.addEventListener('pointerdown',e=>{if(isPaused())return;if(cur!=0)return toast('Your shop keeper runs this shop 🛍️');v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(v2,cam);if(rc.ray.intersectPlane(gp,hit)){plT.x=clamp(hit.x,-4.6,4.2);plT.z=clamp(hit.z,-2.6,4)}});
+function setSt(o,s){o.st=s;o.dst=null;o.go=0;o.wt=0}
+function go(o,x,z,dt,sp=2.4){const p=o.g.position,g=NAVS[o.s];if(!g)return mv(o,x,z,dt,sp);
+if(!o.dst||Math.abs(o.dst[0]-x)>.05||Math.abs(o.dst[1]-z)>.05){o.dst=[x,z];o.path=astar(g,p.x,p.z,x,z)}
+const w=o.path[0];if(!w){o.mov=0;o.v=0;return true}
+const dx=w.x-p.x,dz=w.z-p.z,d=Math.hypot(dx,dz),last=o.path.length==1,tv=last&&d<.6?sp*(.35+d):sp;o.v+=(tv-o.v)*Math.min(1,dt*7);const st=Math.min(o.v*dt,d);
+if(d>.001&&st>0){p.x+=dx/d*st;p.z+=dz/d*st;o.ry=Math.atan2(dx,dz);o.mov=1}
+if(d-st<.05){o.path.shift();if(!o.path.length){o.mov=0;o.v=0;return true}}return false}
+function shove(o,dx,dz){const g=NAVS[o.s],x=o.g.position.x+dx,z=o.g.position.z+dz;if(g&&clearPt(g.r,x,z,.3)){o.g.position.x=x;o.g.position.z=z}}
+function sepAll(){for(let i=0;i<C.length;i++){const a=C[i];if(a.arg||a.road)continue;for(let j=i+1;j<C.length;j++){const b=C[j];if(b.s!=a.s||b.arg||b.road)continue;const dx=b.g.position.x-a.g.position.x,dz=b.g.position.z-a.g.position.z,d=Math.hypot(dx,dz);if(d<.5&&d>.001){const k=(.5-d)*.25;shove(a,-dx/d*k,-dz/d*k);shove(b,dx/d*k,dz/d*k)}}}}
+const avail=p=>S.prod[p.id].stock-(RES[p.id]||0),want=(c,p)=>S.prod[p.id].price/p.ref<=c.wtp;
+function pickProd(s){const n=cnt(s),P=STORES[s].P,last=[];for(let i=0;i<n;i++)if(avail(P[i])==1)last.push(i);if(last.length&&Math.random()<.45)return last[Math.random()*last.length|0];return Math.random()*n|0}
+function spawn(s,kind){const r=Math.random(),k=kind||(r<.08?'v':r<.2?'b':r<.28?'i':r<.3?'g':'n'),cols={v:0xffd43b,b:0x74c0fc,i:0xf783ac,g:0x69db7c};
+const o=person(cols[k]||[0xff7043,0x26a69a,0xffca28,0x7e57c2,0x66bb6a,0xec407a][Math.random()*6|0],[0x212121,0x6d4c41,0xffd54f][Math.random()*3|0],stores[s].R);
+o.s=s;o.k=k;o.cw=-.9+Math.random()*1.8;o.g.position.set(o.cw,0,17);o.pi=pickProd(s);o.wtp=(.75+Math.random()*.75)*(1+.06*S.up.decor)*({v:1.3,b:.82,i:1.15,g:1.1,n:1}[k]);o.sp=1.9+Math.random()*.7;o.nm=NAMES[Math.random()*NAMES.length|0];
+if(k=='v'){const cr=new THREE.Mesh(G('o',.12,.16,0),mat(0xffd43b));cr.position.y=.34;o.head.add(cr)}setSt(o,'in0');C.push(o);return o}
+function bad(c,t,r){pop(t,c.g,'bad');S.rep=Math.max(.5,S.rep-r);if(c.it){c.g.remove(c.it);c.it=null}c.reach=0;c.look=0;c.arg=0;setSt(c,'leave')}
+const staffed=s=>s>0||S.up.cashier>0||Math.hypot(pl.g.position.x-5,pl.g.position.z+.8)<.9;
+function serve(c){const s=c.s,p=STORES[s].P[c.pi],ps=S.prod[p.id];if(c.it){c.g.remove(c.it);c.it=null}c.reach=0;const n=Math.min(c.qty||1,ps.stock);RES[p.id]=Math.max(0,(RES[p.id]||0)-(c.qty||1));
+if(n<=0)return bad(c,'😠 Sold out!',.03);let tot=0;for(let k=0;k<n;k++)tot+=sale(p);
+if(c.k=='g'){const tip=Math.round(tot*.5);S.money+=tip;S.rev+=tip;S.profit+=tip;tot+=tip;pop('🎁 Tip!',c.g)}
+pop('+$'+fm(tot),c.g);if(cur==s)sfx('cash');fly(s,c.pi);c.hop=.5;setSt(c,'leave');shelf(s,c.pi)}
+function updC(c,dt){const s=c.s,q=Q[s],p=STORES[s].P[c.pi],ps=S.prod[p.id],pos=c.g.position;
+switch(c.st){
+case'in0':if(mv(c,c.cw,13.5,dt,c.sp))setSt(c,'cwi');break;
+case'cwi':case'cwo':{const dz=c.st=='cwi'?CWZ:13.5;if(!c.go){c.wt+=dt;if((c.wt>12&&!carNear(s,c.cw,1.8))||!carNear(s,c.cw))c.go=1;c.mov=0}
+if(c.go){c.road=pos.z>7.7&&pos.z<13.4;if(mv(c,c.cw,dz,dt,2.3)){c.road=0;if(c.st=='cwi')setSt(c,'shelf');else setSt(c,'out')}}break}
+case'shelf':{if(!c.ent&&pos.z<4.4){c.ent=1;if(cur==s)sfx('enter');if(c.k!='n')pop({v:'👑 VIP!',b:'🏷️ Deals!',i:'😍',g:'🎁 Lucky!'}[c.k],c.g)}
+const b=bs(c.pi);if(go(c,b[0],b[1],dt,c.sp)){setSt(c,'browse');c.tm=1.4+Math.random();c.look=1;c.reach=1;c.w=0;pop(p.e,c.g)}break}
+case'browse':{c.ry=LAY[c.pi>>1][5];c.tm-=dt;
+if(avail(p)==1&&!AUC.on&&want(c,p)){const o=C.find(o=>o!==c&&o.s==s&&o.pi==c.pi&&o.st=='browse'&&want(o,p));if(o){aucStart(c,o);break}
+if(c.w<5&&C.some(o=>o!==c&&o.s==s&&o.pi==c.pi&&['in0','cwi','shelf'].includes(o.st)&&want(o,p))){c.w+=dt;c.tm=Math.max(c.tm,.3);break}}
+if(c.tm<=0){c.look=0;c.reach=0;const av=avail(p);
+if(av<=0)bad(c,'😠 Out of '+p.n,.03);else if(!want(c,p))bad(c,'💸 Too pricey!',.01);else if(q.length>=4)bad(c,'😤 Too crowded',.01);
+else{c.qty=c.k=='v'?Math.min(av,2+(Math.random()*3|0)):1;RES[p.id]=(RES[p.id]||0)+c.qty;q.push(c);setSt(c,'queue');c.srv=0;c.it=pItem(s,c.pi);c.it.position.set(0,.95,.4);c.it.scale.setScalar(.85);c.g.add(c.it);c.reach=1}}break}
+case'queue':{const i=q.indexOf(c),at=go(c,2.6,-.8+i,dt,c.sp);if(at)c.ry=Math.PI/2;
+if(i==0&&at&&staffed(s)){c.srv+=dt;stores[s].ca.reach=1;if(c.srv>=coTime()){q.shift();serve(c)}}break}
+case'leave':if(go(c,c.cw,CWZ,dt,c.sp))setSt(c,'cwo');break;
+case'out':if(mv(c,c.cw,17,dt,c.sp)){c.g.parent.remove(c.g);C.splice(C.indexOf(c),1)}break}}
+/* ---------- INPUT (tap to walk, with pathfinding) ---------- */
+const rc=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();pl.s=0;
+ren.domElement.addEventListener('pointerdown',e=>{if(isPaused())return;if(cur!=0)return toast('Your shop keeper runs this shop 🛍️');v2.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);rc.setFromCamera(v2,cam);if(rc.ray.intersectPlane(gp,hit)){plT.x=clamp(hit.x,-4.6,5.3);plT.z=clamp(hit.z,-3.6,7.5)}});
 /* ---------- UI ---------- */
 let tab='',tt;
 function toast(t){if(/Not enough|is full|limit|not available|No ad|not valid/.test(t))sfx('error');const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>e.style.opacity=0,1500)}
 function modal(h,btn,cb){$('mbox').innerHTML=h+`<br><button id="mok">${btn}</button>`;$('modal').style.display='flex';$('mok').onclick=()=>{$('modal').style.display='none';cb&&cb()}}
 const D=[['📱','Your first shop. Gadgets and accessories.'],['🐾','Dogs, cats, birds, hamsters and supplies. Has its own shop keeper!'],['👗','Clothes, shoes and fashion. Has its own shop keeper!'],['🍔','Snacks, meals and treats. Has its own shop keeper!']];
+const ucost=(u,l)=>Math.round(u.base*u.mul**l*(S.disc?.5:1));
 function ups(){const s=cur;return[{k:'shelf',n:'📚 Bigger Shelves',d:'+10 max stock per product',base:150,mul:1.8,max:5},{k:'decor',n:'🪴 Decorations',d:'More visitors, and customers accept higher prices',base:200,mul:2,max:5},{k:'counter',n:'⚡ Faster Checkout',d:'Customers get served quicker',base:120,mul:1.8,max:5},
 ...(s==0?[{k:'cashier',n:'🧑‍💼 Hire Cashier',d:'Checkout works without you at the counter',base:250,mul:1,max:1}]:[]),{k:'range',n:'🛍️ New Product Range',d:'Unlocks new shelves and products (2 levels)',base:[400,800,1500,2500][s],mul:3.75,max:2}]}
 const lv=k=>k=='range'?S.up.r[cur]:S.up[k];
@@ -365,16 +439,16 @@ if(tab=='stock'){h+=`<div class=row><span>Sold <b data-v=sold></b></span><span>R
 PL(cur).forEach(p=>h+=`<div class=card><div class=t>${p.e} ${p.n}</div><div>Stock <b data-v="st:${p.id}"></b> · Cost $${p.cost} each</div><div class=bar><i data-v="bar:${p.id}"></i></div><div class=bt><button data-a="buy:${p.id}:5">Buy 5</button><button data-a="buy:${p.id}:10">Buy 10</button><button data-a="fill:${p.id}" data-v="fc:${p.id}"></button></div></div>`)}
 if(tab=='price'){h+=`<div class=row>Higher price = more profit per sale but fewer buyers.</div>`;
 PL(cur).forEach(p=>h+=`<div class=card><div class=t>${p.e} ${p.n} (cost $${p.cost})</div><div class=bt><button data-a="pr:${p.id}:-5">−5</button><button data-a="pr:${p.id}:-1">−1</button><b data-v="pr:${p.id}" style="font-size:20px;min-width:52px;text-align:center"></b><button data-a="pr:${p.id}:1">+1</button><button data-a="pr:${p.id}:5">+5</button></div><div>Profit per sale <b data-v="pf:${p.id}"></b> · Buyers who accept <b data-v="dm:${p.id}"></b></div></div>`)}
-if(tab=='up')ups().forEach(u=>{const l=lv(u.k),c=Math.round(u.base*u.mul**l);h+=`<div class=card><div class=t>${u.n} · Lv ${l}/${u.max}</div><div class=bar><i style="width:${l/u.max*100}%"></i></div><div>${u.d}</div><div class=bt>${l>=u.max?'<b>MAX ✅</b>':`<button data-a="up:${u.k}">Buy · $${fm(c)}</button>`}</div></div>`});
+if(tab=='up')ups().forEach(u=>{const l=lv(u.k),c=ucost(u,l);h+=`<div class=card><div class=t>${u.n} · Lv ${l}/${u.max}</div><div class=bar><i style="width:${l/u.max*100}%"></i></div><div>${u.d}</div><div class=bt>${l>=u.max?'<b>MAX ✅</b>':`<button data-a="up:${u.k}">Buy · $${fm(c)}${S.disc?' 🏷️-50%':''}</button>`}</div></div>`});
 if(tab=='stores')STORES.forEach((st,s)=>h+=`<div class=card><div class=t>${D[s][0]} ${st.n}</div><div>${D[s][1]}</div><div class=bt>${S.own[s]?(cur==s?'<b>👀 Viewing now</b>':`<button data-a="store:${s}">Go to shop</button>`):`<button data-a="store:${s}">Buy · $${fm(st.cost)}</button>`}</div></div>`);
-if(tab=='free'){h+=`<div class=row>Ads are optional. You are rewarded only after the ad finishes.</div>`;ADS.forEach(a=>h+=`<div class=card><div class=t>${a.n}</div><div>${a.d()}</div><div class=bt><button data-a="ad:${a.k}">📺 Watch ad · ${left(a.k)} left today</button></div></div>`)}
+if(tab=='free'){h+=`<div class=row>Ads are optional. You are rewarded only after the ad finishes.</div>`;ADS.filter(a=>!a.hide).forEach(a=>h+=`<div class=card><div class=t>${a.n}</div><div>${a.d()}</div><div class=bt><button data-a="ad:${a.k}" data-v="ad:${a.k}"></button></div></div>`)}
 if(tab=='menu')h+=`<div class="card m"><div class=t>Save & backup</div><div>Your game saves automatically on this phone and works offline.</div><div class=bt><button data-a="export">Export backup</button><button data-a="import">Import backup</button><button data-a="reset">Reset game</button></div></div>`;
 pn.innerHTML=h;refresh()}
-function refresh(){$('money').textContent=fm(S.money);if(S.money!==lastM){const mp=$('moneyP');mp.classList.remove('bump');void mp.offsetWidth;if(S.money>lastM)mp.classList.add('bump');lastM=S.money}$('stars').textContent='⭐ '+S.rep.toFixed(1);$('sn').textContent='🏪 '+STORES[cur].n+' · Lv '+lvl()+(Date.now()<S.boost?' 📣x2':'');$('xp').style.width=Math.round(xpf()*100)+'%';
+function refresh(){$('money').textContent=fm(S.money);if(S.money!==lastM){const mp=$('moneyP');mp.classList.remove('bump');void mp.offsetWidth;if(S.money>lastM)mp.classList.add('bump');lastM=S.money}$('stars').textContent='⭐ '+S.rep.toFixed(1);$('sn').textContent='🏪 '+STORES[cur].n+' · Lv '+lvl()+(Date.now()<S.boost?' 📣x2':'')+(Date.now()<S.pb?' 💎x2':'');$('xp').style.width=Math.round(xpf()*100)+'%';
 const out=[];STORES.forEach((st,s)=>S.own[s]&&PL(s).forEach(p=>S.prod[p.id].stock<=0&&out.push(p.n)));$('alert').textContent=out.length?'⚠️ Out of stock: '+out.slice(0,3).join(', ')+(out.length>3?' +'+(out.length-3):''):'';
 $$('[data-v]').forEach(el=>{const[k,i]=el.dataset.v.split(':'),ps=i&&S.prod[i],p=i&&ALL.find(x=>x.id==i);let t='';
 if(k=='sold')t=fm(S.sold);else if(k=='rev')t='$'+fm(S.rev);else if(k=='profit')t='$'+fm(S.profit);
-else if(k=='st'){t=ps.stock+'/'+mx();el.className=ps.stock<=0?'low':''}else if(k=='bar'){el.style.width=Math.round(ps.stock/mx()*100)+'%';el.className=ps.stock<=2?'lo':''}else if(k=='pr')t='$'+ps.price;else if(k=='pf')t='$'+(ps.price-p.cost);
+else if(k=='st'){t=ps.stock+'/'+mx();el.className=ps.stock<=0?'low':''}else if(k=='ad'){const c=cdLeft(i),l=left(i);t=l<=0?'Come back tomorrow':c>0?'⏳ '+Math.floor(c/60000)+':'+String(Math.floor(c/1000)%60).padStart(2,'0'):'📺 Watch ad · '+l+' left';el.disabled=l<=0||c>0}else if(k=='bar'){el.style.width=Math.round(ps.stock/mx()*100)+'%';el.className=ps.stock<=2?'lo':''}else if(k=='pr')t='$'+ps.price;else if(k=='pf')t='$'+(ps.price-p.cost);
 else if(k=='dm')t=Math.round(dem(p)*100)+'%';else if(k=='fc')t='Fill ($'+fm(Math.max(0,mx()-ps.stock)*p.cost)+')';el.textContent=t})}
 $('tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;tab=tab==b.dataset.t?'':b.dataset.t;sfx('open');render()};
 $('panel').onclick=e=>{const b=e.target.closest('[data-a]');if(b)act(b.dataset.a.split(':'))};
@@ -382,22 +456,35 @@ function act([k,a,b]){if(k=='pr'||k=='ad'||k=='export'||k=='import'||k=='reset')
 if(k=='buy'||k=='fill'){const p=ALL.find(x=>x.id==a),i=STORES[cur].P.indexOf(p),ps=S.prod[a];let n=k=='fill'?mx()-ps.stock:Math.min(+b,mx()-ps.stock);if(n<=0)return toast('Shelf is full!');
 if(S.money<n*p.cost){n=Math.floor(S.money/p.cost);if(n<=0)return toast('Not enough cash 💸')}S.money-=n*p.cost;ps.stock+=n;S.rs++;mfx(-n*p.cost);sfx(k=='fill'?'restock':'buy');shelf(cur,i);toast(`Bought ${n} × ${p.n}`)}
 else if(k=='pr'){const p=ALL.find(x=>x.id==a);S.prod[a].price=clamp(S.prod[a].price+ +b,1,p.ref*3)}
-else if(k=='up'){const u=ups().find(x=>x.k==a),l=lv(a),c=Math.round(u.base*u.mul**l);if(l>=u.max)return;if(S.money<c)return toast('Not enough cash 💸');S.money-=c;if(a=='range')S.up.r[cur]++;else S.up[a]++;S.upc++;mfx(-c);sfx('upgrade');applyUp();toast('Upgraded! 🎉')}
+else if(k=='up'){const u=ups().find(x=>x.k==a),l=lv(a),c=ucost(u,l);if(l>=u.max)return;if(S.money<c)return toast('Not enough cash 💸');S.money-=c;if(a=='range')S.up.r[cur]++;else S.up[a]++;S.upc++;S.disc=0;mfx(-c);sfx('upgrade');applyUp();toast('Upgraded! 🎉')}
 else if(k=='store'){const s=+a;if(!S.own[s]){if(S.money<STORES[s].cost)return toast('Not enough cash 💸');S.money-=STORES[s].cost;S.own[s]=1;mfx(-STORES[s].cost);sfx('unlock');confetti();applyUp();toast('New shop opened! 🎉')}cur=s;if(s>0)toast('Buy stock for this shop in the Stock tab 📦')}
-else if(k=='ad'){if(left(a)<=0)return toast('Daily limit reached. Come back tomorrow!');showAd(()=>reward(a))}
+else if(k=='ad'){const m=adCan(a);if(m)return toast(m);showAd(()=>reward(a))}
 else if(k=='export'){const s=btoa(JSON.stringify(S));try{navigator.clipboard.writeText(s)}catch(e){}prompt('Backup code (copied if possible). Save it somewhere safe:',s)}
 else if(k=='import'){const s=prompt('Paste your backup code:');if(!s)return;try{const j=JSON.parse(atob(s.trim()));if(!valid(j))throw 0;S=Object.assign(fresh(),j);fix();applyUp();save();toast('Backup loaded ✅')}catch(e){toast('That code is not valid')}}
 else if(k=='reset'){if(confirm('Delete ALL progress and start over?')){S=fresh();fix();cur=0;applyUp();save();toast('Fresh start')}}
 save();render()}
 /* ---------- REWARDED ADS (test ads until you add your real AdMob IDs) ---------- */
 const TEST=true,ADUNIT='ca-app-pub-3940256099942544/5224354917',AD=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AdMob;let adInit=0,adBusy=0;
-const ADS=[{k:'cash',n:'💰 Bonus Cash',lim:5,d:()=>'Get $'+fm(bonus())},{k:'stock',n:'📦 Free Stock',lim:3,d:()=>'+8 of every product in the shop you are viewing'},{k:'boost',n:'📣 Marketing Campaign',lim:3,d:()=>'Double customers for 5 minutes'+(Date.now()<S.boost?' (active now)':'')}];
+const ADS=[{k:'cash',n:'💰 Bonus Cash',lim:5,cd:120,d:()=>'Get $'+fm(bonus())},
+{k:'ship',n:'📦 Free Product Shipment',lim:4,cd:300,d:()=>'A van delivers +10 of every product to the shop you are viewing'},
+{k:'refill',n:'🧺 Free Inventory Refill',lim:2,cd:900,d:()=>'A van fills every shelf in this shop to the top'},
+{k:'emerg',n:'🚚 Emergency Stock Delivery',lim:3,cd:300,d:()=>'Fast van: +15 of every out-of-stock product in this shop'},
+{k:'boost',n:'📣 Customer Attraction Boost',lim:3,cd:600,d:()=>'Double customers for 5 minutes'+(Date.now()<S.boost?' (active)':'')},
+{k:'pb',n:'💎 2x Store Profit',lim:3,cd:900,d:()=>'Every sale earns double profit for 10 minutes'+(Date.now()<S.pb?' (active)':'')},
+{k:'disc',n:'🏷️ Upgrade Discount',lim:2,cd:600,d:()=>S.disc?'Your next upgrade is already 50% off':'50% off your next store upgrade'},
+{k:'auc',hide:1,lim:6,cd:0},{k:'off',hide:1,lim:2,cd:0}];
 const bonus=()=>150+Math.floor(S.rev*.02);
-const left=k=>{const d=new Date().toDateString();if(S.ads.d!=d)S.ads={d,n:{}};const a=ADS.find(x=>x.k==k);return Math.max(0,(a?a.lim:2)-(S.ads.n[k]||0))};
-function reward(k){S.ads.n[k]=(S.ads.n[k]||0)+1;S.adw++;sfx('reward');confetti(10);
-if(k=='cash'){const b=bonus();S.money+=b;toast('+$'+fm(b)+' 🎉')}
-else if(k=='stock'){PL(cur).forEach((p,i)=>{const ps=S.prod[p.id];ps.stock=Math.min(mx(),ps.stock+8);shelf(cur,i)});toast('Shelves restocked! 📦')}
-else if(k=='boost'){S.boost=Math.max(Date.now(),S.boost)+300000;toast('Customers x2 for 5 minutes! 📣')}}
+const left=k=>{const d=new Date().toDateString();if(S.ads.d!=d)S.ads={d,n:{},t:{}};if(!S.ads.t)S.ads.t={};const a=ADS.find(x=>x.k==k);return Math.max(0,(a?a.lim:2)-(S.ads.n[k]||0))};
+const cdLeft=k=>{const a=ADS.find(x=>x.k==k);return a&&a.cd&&S.ads.t?Math.max(0,a.cd*1000-(Date.now()-(S.ads.t[k]||0))):0};
+const adCan=k=>{if(left(k)<=0)return'Daily limit reached. Come back tomorrow!';if(cdLeft(k)>0)return'Not ready yet, please wait a little';
+if(k=='emerg'&&!PL(cur).some(p=>S.prod[p.id].stock<=0))return'Nothing is out of stock right now';if(k=='disc'&&S.disc)return'You already have an upgrade discount waiting';return''};
+function shipment(kind){const L=PL(cur);let n=0;L.forEach((p,i)=>{const ps=S.prod[p.id],b=ps.stock;if(kind=='ship')ps.stock=Math.min(mx(),b+10);else if(kind=='refill')ps.stock=mx();else if(ps.stock<=0)ps.stock=Math.min(mx(),15);n+=ps.stock-b;shelf(cur,i)});callVan(cur);return n}
+function reward(k){S.ads.t=S.ads.t||{};S.ads.n[k]=(S.ads.n[k]||0)+1;S.ads.t[k]=Date.now();S.adw++;sfx('reward');confetti(10);
+if(k=='cash'){const b=bonus();S.money+=b;mfx(b);toast('+$'+fm(b)+' 🎉')}
+else if(k=='ship'||k=='refill'||k=='emerg'){const n=shipment(k);sfx('restock');toast('🚚 Delivered '+n+' items!')}
+else if(k=='boost'){S.boost=Math.max(Date.now(),S.boost)+300000;toast('Customers x2 for 5 minutes! 📣')}
+else if(k=='pb'){S.pb=Math.max(Date.now(),S.pb)+600000;toast('💎 Double profit for 10 minutes!')}
+else if(k=='disc'){S.disc=1;toast('🏷️ Your next upgrade is 50% off!')}}
 function showAd(cb){if(!AD||adBusy)return toast('Ads are not available right now. Keep playing!');adBusy=1;const hs=[];let fin=0;
 const done=()=>{if(fin)return;fin=1;hs.forEach(h=>h&&h.remove&&h.remove());adBusy=0},no=()=>{toast('No ad available. Try again later');done()};
 (async()=>{try{if(!adInit){await AD.initialize({initializeForTesting:TEST});adInit=1}
@@ -423,12 +510,12 @@ const ACH=[['first','🛒 First Sale','Make your first sale',()=>S.sold>=1],['k1
 ['c1k','🎉 Mall Famous','Serve 1,000 customers',()=>S.served>=1000],['own4','🏙️ Mall Mogul','Own all 4 shops',()=>S.own.every(x=>x)],['lv5','⭐ Level 5','Reach level 5',()=>lvl()>=5],
 ['ad','📺 Supporter','Watch a rewarded ad',()=>S.adw>=1],['st7','🔥 Loyal Boss','Claim daily rewards 7 days in a row',()=>S.daily.streak>=7],['m1','🤑 Millionaire','Earn $1,000,000 in revenue',()=>S.rev>=1e6]];
 const NC={};function note(k,t,cd=120000){const n=Date.now();if(NC[k]&&n-NC[k]<cd)return false;NC[k]=n;toast(t);sfx('notify');return true}
-function tick(){if(isPaused())return;
+function tick(){if(isPaused())return;evTick();
 ACH.forEach(a=>{if(!S.ach[a[0]]&&a[3]()){S.ach[a[0]]=1;toast('🏆 Achievement: '+a[1]);sfx('reward');confetti(10)}});
 S.mis.forEach(m=>{if(!m.nf&&mProg(m)>=m.n){m.nf=1;note('m'+m.c,'🎯 Mission complete: '+mText(m)+' (claim it in the menu)',1000)}});
 const L=lvl();if(S.lv&&L>S.lv){S.money+=L*100;mfx(L*100);toast('⬆️ LEVEL UP! Level '+L+' reached (+$'+L*100+')');sfx('level');confetti()}S.lv=L;
 let said=0;STORES.forEach((st,s)=>{if(!S.own[s])return;PL(s).forEach(p=>{if(said)return;const k=S.prod[p.id].stock;if(k<=0)said=note('o'+p.id,'📦 Out of stock: '+p.n+' ('+st.n+')',150000);else if(k<=2)said=note('l'+p.id,'⚠️ Low inventory: '+p.n+' ('+k+' left)',200000)})});
-if(!said){const c=Math.min(...ups().map(u=>lv(u.k)<u.max?Math.round(u.base*u.mul**lv(u.k)):1e12));if(S.money>=c)note('up','🔧 You can afford an upgrade!',400000)}
+if(!said){const c=Math.min(...ups().map(u=>lv(u.k)<u.max?ucost(u,lv(u.k)):1e12));if(S.money>=c)note('up','🔧 You can afford an upgrade!',400000)}
 $('pdot').style.display=(dailyInfo().av||S.mis.some(m=>mProg(m)>=m.n))?'block':'none'}
 function confetti(n=18){const e=['🎉','💰','⭐','💵','✨'];for(let i=0;i<n;i++){const d=document.createElement('div');d.className='cf';d.textContent=e[i%5];d.style.left=Math.random()*100+'vw';d.style.animationDelay=Math.random()*.4+'s';d.style.fontSize=14+Math.random()*16+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),2400)}}
 function mfx(v){const d=document.createElement('div');d.className='fl '+(v<0?'neg':'pos');d.textContent=(v<0?'−$':'+$')+fm(Math.abs(v));$('moneyP').appendChild(d);setTimeout(()=>d.remove(),1000)}
@@ -441,7 +528,7 @@ pause:()=>hd('⏸ Paused')+[['close','▶ Resume','g'],['go:daily','🎁 Daily R
 set:()=>hd('⚙️ Settings',1)+`<div class=card>${tgl('m','🎵 Music')}${slr('mv','Music volume')}${tgl('s','🔊 Sound effects')}${slr('sv','Sound volume')}<div class=rw><span>🎨 Graphics</span><button class="btn ${ST.q?'g':''}" data-s="q">${ST.q?'High':'Low'}</button></div></div><div class=card><div class=t>💾 Backup</div><div class=bt><button class=btn data-s="export">Export</button><button class="btn y" data-s="import">Import</button></div></div><button class="btn r wide" data-s="ask:reset">🗑️ Reset game</button>`,
 stats:()=>{const nw=S.money+STORES.reduce((a,st,s)=>a+(S.own[s]?st.cost+st.P.reduce((b,p)=>b+S.prod[p.id].stock*p.cost,0):0),0);return hd('📊 Statistics',1)+[['💵 Cash','$'+fm(S.money)],['🏦 Net worth','$'+fm(nw)],['📈 Total revenue','$'+fm(S.rev)],['💰 Total profit','$'+fm(S.profit)],['📦 Products sold',fm(S.sold)],['🙂 Customers served',fm(S.served)],['🏬 Shops owned',S.own.filter(x=>x).length+'/4'],['⭐ Reputation',S.rep.toFixed(1)+'/3'],['🎖️ Level',lvl()],['🏆 Achievements',Object.keys(S.ach).length+'/'+ACH.length]].map(r=>`<div class=rw><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')},
 ach:()=>hd('🏆 Achievements',1)+`<p class=c>${Object.keys(S.ach).length}/${ACH.length} unlocked</p>`+ACH.map(a=>`<div class="card ach ${S.ach[a[0]]?'ok':''}"><div class=t>${a[1]}</div><div>${a[2]}</div></div>`).join(''),
-mis:()=>hd('🎯 Missions',1)+S.mis.map((m,i)=>`<div class=card><div class=t>${mText(m)}</div><div class=bar><i style="width:${mProg(m)/m.n*100}%"></i></div><div class=rw><span>${fm(mProg(m))}/${fm(m.n)} · Reward $${fm(m.r)}</span><button class="btn g" data-s="cm:${i}" ${mProg(m)>=m.n?'':'disabled'}>Claim</button></div></div>`).join(''),
+mis:()=>hd('🎯 Missions',1)+dchHtml()+S.mis.map((m,i)=>`<div class=card><div class=t>${mText(m)}</div><div class=bar><i style="width:${mProg(m)/m.n*100}%"></i></div><div class=rw><span>${fm(mProg(m))}/${fm(m.n)} · Reward $${fm(m.r)}</span><button class="btn g" data-s="cm:${i}" ${mProg(m)>=m.n?'':'disabled'}>Claim</button></div></div>`).join(''),
 daily:()=>{const i=dailyInfo(),n=i.av?i.n:S.daily.streak,mu=dMul(n);return hd('🎁 Daily Reward',1)+`<div class=days>`+DR.map((v,d)=>{const done=i.av?d<i.day:d<=i.day,now=i.av&&d==i.day;return `<div class="dy ${done?'ok':''} ${now?'now':''}"><small>Day ${d+1}</small><b>${done?'✅':'💵'}</b><span>$${fm(v*mu)}</span></div>`}).join('')+`</div><p class=c>🔥 Streak: ${S.daily.streak} day${S.daily.streak==1?'':'s'}</p>`+(i.av?`<button class="btn g wide" data-s="cd">Claim $${fm(DR[i.day]*mu)}</button>`:`<button class="btn wide" disabled>Come back tomorrow!</button>`)},
 about:()=>hd('ℹ️ About',1)+`<div class=card><div class=t>DUMPED TO BILLIONAIRE</div><p>She called you broke. You are building an empire: shops, prices, customers and sweet revenge.</p><p>🎵 All music and sounds are created inside the game, so everything works offline.</p><p>💾 Progress is saved on this phone only. No account needed.</p><p>Version 2.0</p></div>`,
 ask:()=>hd('Are you sure?',1)+`<div class=card>${askMsg}</div><button class="btn r wide" data-s="yes">Yes</button><button class="btn wide" data-s="back">No</button>`};
@@ -457,7 +544,7 @@ else if(a=='q'){ST.q=ST.q?0:1;saveST();setQ();renderSheet()}
 else if(a=='export'||a=='import')act([a])
 else if(a=='ask'){ask('This will delete ALL your progress. Continue?',()=>{S=fresh();fix();S.intro=1;initMis();S.lv=1;cur=0;applyUp();save();toast('Fresh start');sh='set';shFrom='';renderSheet()})}
 else if(a=='yes'){const f=askFn;askFn=null;shFrom='';f&&f()}
-else if(a=='cd'){claimDaily();renderSheet()}
+else if(a=='cd'){claimDaily();renderSheet()}else if(a=='cdc'){claimDch();renderSheet()}
 else if(a=='cm'){const m=S.mis[x];if(mProg(m)<m.n)return;S.money+=m.r;mfx(m.r);sfx('cash');confetti(10);S.mis[x]=newMis();save();renderSheet()}};
 $('sheet').addEventListener('input',e=>{const k=e.target.dataset.sl;if(!k)return;ST[k]=e.target.value/100;aVol();saveST()});
 $('sheet').addEventListener('change',e=>{const k=e.target.dataset.sl;if(k)sfx(k=='sv'?'cash':'click')});
@@ -466,7 +553,7 @@ $('pbtn').onclick=()=>openSheet('pause');
 const hasSave=()=>S.intro||S.sold>0||S.rev>0;
 function showMenu(){inMenu=true;$('menu').classList.add('on');$('hud').style.display='none';$('tabs').style.display='none';tab='';render();$('bPlay').textContent=hasSave()?'▶ CONTINUE':'▶ PLAY';$('bNew').style.display=hasSave()?'':'none';music('menu')}
 function enterGame(){aInit();$('menu').classList.remove('on');inMenu=false;$('hud').style.display='';$('tabs').style.display='';music('game');last=performance.now();refresh();
-if(offPending)showOff();else if(dailyInfo().av)openSheet('daily')}
+if(offPending)showOff();else if(dailyInfo().av)openSheet('daily');if(!S.tipc){S.tipc=1;setTimeout(()=>toast('Tip: stand on the green ring behind the counter to serve customers 👷'),2500)}}
 function showOff(){const o=offPending;offPending=null;modal(`<h2>Welcome back! 💰</h2><p>While you were away, your shops sold <b>${o.sold}</b> items and earned <b>$${fm(o.gain)}</b>.</p><p>(Offline earnings are capped at 2 hours and limited by your stock.)</p><button id="mad" class="btn g">📺 Watch ad: double it!</button>`,'Collect',()=>{refresh();if(dailyInfo().av)openSheet('daily')});
 $('mad').onclick=()=>{if(left('off')<=0)return toast('Daily limit reached');showAd(()=>{S.ads.n.off=(S.ads.n.off||0)+1;S.money+=o.gain;mfx(o.gain);toast('Doubled! +$'+fm(o.gain));refresh();$('mad').style.display='none'})}}
 const SL=[['💔','It was a normal Tuesday… until your girlfriend dumped you. In public. Next to the free samples.'],['😭','"You are BROKE," she said, and stole your last fries on her way out.'],['🏚️','So you rented a tiny roadside shop that smells like old chips. Budget: $500 and a lot of pride.'],['💪','Stock the shelves, set clever prices and serve every customer. One day you will own the whole mall!'],['💸','She called you broke.<br><b>Build an empire.</b>']];
@@ -477,6 +564,53 @@ $('stN').onclick=()=>{if(si<SL.length-1){si++;slide()}else endStory()};$('stS').
 $('bPlay').onclick=()=>{aInit();if(!S.intro&&!hasSave())story();else{S.intro=1;enterGame()}};
 $('bNew').onclick=()=>{aInit();ask('Start a brand-new game? Your current progress will be erased.',()=>{S=fresh();fix();initMis();S.lv=1;offPending=null;cur=0;applyUp();save();closeSheet();story()});$('sheet').classList.add('on')};
 $('bSet').onclick=()=>{aInit();openSheet('set')};$('bAbout').onclick=()=>{aInit();openSheet('about')};
+/* ---------- LAST-ITEM AUCTION ---------- */
+let AUC={on:0};
+function aucStart(a,b){const s=a.s,p=STORES[s].P[a.pi],P0=S.prod[p.id].price;RES[p.id]=(RES[p.id]||0)+1;
+const m=()=>Math.max(P0*1.12,p.ref*(.95+Math.random()*1.05));
+AUC={on:1,ph:'bid',s,pi:a.pi,p,a,b,bid:[P0,P0],max:[m(),m()],top:-1,t:0,dur:16,nx:1.2,bb:0,hype:3,rd:0,amount:0,win:-1,dbl:0,t2:0};
+[a,b].forEach(c=>{c.look=0;c.reach=0;setSt(c,'auction');c.arg=0});
+const sp=bs(a.pi),ax=a.pi>>1>2?[0,.35]:[.35,0];a.ap=[sp[0]-ax[0],sp[1]-ax[1]];b.ap=[sp[0]+ax[0],sp[1]+ax[1]];
+toast('🔨 AUCTION! Two shoppers want the last '+p.n+'!');sfx('notify');tab='';render();aucFull()}
+function aucEnd(w){const A=AUC;if(!A.on||A.ph!='bid')return;const p=A.p,ps=S.prod[p.id],s=A.s,win=w?A.b:A.a,lose=w?A.a:A.b;RES[p.id]=Math.max(0,(RES[p.id]||0)-1);
+if(ps.stock<=0){aucCancel();return}
+const amt=Math.round(A.bid[w]);sale(p,amt);A.ph='done';A.amount=amt;A.win=w;A.t2=0;win.arg=0;lose.arg=0;
+win.it=pItem(s,A.pi);win.it.position.set(0,.95,.4);win.it.scale.setScalar(.85);win.g.add(win.it);win.reach=1;win.hop=.6;pop('🏆 +$'+fm(amt),win.g);fly(s,A.pi);shelf(s,A.pi);sfx('cash');confetti(8);
+setSt(win,'leave');bad(lose,'😭 Outbid!',0);aucFull()}
+function aucCancel(){const A=AUC;if(!A.on)return;if(A.ph=='bid'){RES[A.p.id]=Math.max(0,(RES[A.p.id]||0)-1);bad(A.a,'😒 No deal',.01);bad(A.b,'😒 No deal',.01)}AUC={on:0};aucFull()}
+function aucDouble(A){if(A.dbl||!A.amount)return;A.dbl=1;const x=A.amount;S.money+=x;S.rev+=x;S.profit+=x;mfx(x);toast('📺 Auction winnings doubled! +$'+fm(x));aucFull()}
+function aucUpd(dt){if(!AUC.on)return;const A=AUC,a=A.a,b=A.b;
+if(A.ph=='bid'){if(!A.rd){[a,b].forEach(c=>{if(!c.arg&&go(c,c.ap[0],c.ap[1],dt,2.6))c.arg=1});
+if(a.arg&&b.arg){A.rd=1;const dx=b.g.position.x-a.g.position.x,dz=b.g.position.z-a.g.position.z;a.ry=Math.atan2(dx,dz);b.ry=Math.atan2(-dx,-dz);pop('😠 MINE!',a.g,'bad');pop('🤬 NO, MINE!',b.g,'bad');aucFull()}return}
+A.t+=dt;A.nx-=dt;A.bb-=dt;if(A.bb<=0){A.bb=.9;pop(['💢','😡 MINE!','🤬','💥'][Math.random()*4|0],(Math.random()<.5?a:b).g,'bad')}
+if(A.nx<=0){A.nx=.9+Math.random()*.9;const cur0=Math.max(A.bid[0],A.bid[1]),lo=A.top<0?(Math.random()<.5?0:1):1-A.top,step=Math.max(1,Math.round(A.p.ref*(.03+Math.random()*.07))),nb2=Math.min(A.max[lo],cur0+(A.top<0?Math.max(1,Math.round(step/2)):step));
+if(nb2<=cur0){aucEnd(1-lo);return}A.bid[lo]=nb2;A.top=lo;pop('💰 $'+fm(nb2),(lo?b:a).g);sfx('buy')}
+if(A.t>=A.dur)aucEnd(A.top<0?(Math.random()<.5?0:1):A.top)}
+else{A.t2+=dt;if(A.t2>10&&!adBusy){AUC={on:0};aucFull()}}}
+function aucFull(){const el=$('auc'),A=AUC;if(!A.on){el.style.display='none';el.innerHTML='';return}el.style.display='block';const p=A.p;
+if(A.ph=='bid')el.innerHTML=`<div class=ah>🔨 LAST ITEM AUCTION</div><div class=ap>${p.e} <b>${p.n}</b> · only 1 left!</div>${A.rd?'':'<div class=c>The shoppers are rushing to the shelf…</div>'}<div class=ab><div id=bd0>👤 ${A.a.nm}<b id=ab0></b></div><div id=bd1>👤 ${A.b.nm}<b id=ab1></b></div></div><div class=bar><i id=abar></i></div><div class=bt><button class="btn p" data-u="hype">📣 Hype ×${A.hype}</button><button class="btn g" data-u="sold">🔨 SOLD!</button><button class="btn r" data-u="cancel">✖ No deal</button></div>`;
+else{const w=A.win?A.b:A.a;el.innerHTML=`<div class=ah>🏆 SOLD!</div><div class=ap>${w.nm} wins the ${p.e} ${p.n} for <b>$${fm(A.amount)}</b></div><div class=bt>${A.dbl?'<b>Doubled ✅</b>':`<button class="btn y" data-u="dbl">📺 Watch ad: double it (+$${fm(A.amount)})</button>`}<button class="btn" data-u="close">Close</button></div>`}aucFx()}
+function aucFx(){const A=AUC;if(!A.on||A.ph!='bid')return;const g=i=>$(i);if(!g('ab0'))return;g('ab0').textContent=' $'+fm(A.bid[0]);g('ab1').textContent=' $'+fm(A.bid[1]);g('bd0').className=A.top==0?'lead':'';g('bd1').className=A.top==1?'lead':'';g('abar').style.width=Math.max(0,100-A.t/A.dur*100)+'%'}
+$('auc').onclick=e=>{const b=e.target.closest('[data-u]');if(!b)return;const u=b.dataset.u,A=AUC;sfx('click');
+if(u=='hype'&&A.ph=='bid'&&A.rd&&A.hype>0){A.hype--;A.max[0]*=1.12;A.max[1]*=1.12;A.nx=0;toast('📣 The crowd goes wild!');sfx('upgrade');aucFull()}
+else if(u=='sold'&&A.ph=='bid'&&A.rd)aucEnd(A.top<0?(Math.random()<.5?0:1):A.top);
+else if(u=='cancel')aucCancel();else if(u=='close'){AUC={on:0};aucFull()}
+else if(u=='dbl'){const m=left('auc');if(m<=0)return toast('Daily limit reached. Come back tomorrow!');showAd(()=>{S.ads.n.auc=(S.ads.n.auc||0)+1;aucDouble(A)})}};
+setInterval(aucFx,250);
+/* ---------- EVENTS, DAILY CHALLENGE, REPUTATION ---------- */
+const EV={t:80};
+const DC=[['served','Serve {n} customers',[20,30,45,70],6],['sold','Sell {n} products',[25,40,60,100],8],['rev','Earn ${n} in sales',[300,800,2000,5000],.2]];
+function dchInit(){const t=today();if(!S.dch||S.dch.d!=t){const d=DC[Math.random()*3|0],n=d[2][Math.min(3,Math.floor((lvl()-1)/3))];S.dch={d:t,c:d[0],n,b:S[d[0]]||0,r:Math.round(n*d[3]+150),done:0,nf:0}}}
+const dchProg=()=>Math.min(S.dch.n,Math.max(0,(S[S.dch.c]||0)-S.dch.b));
+function claimDch(){dchInit();if(S.dch.done||dchProg()<S.dch.n)return;S.dch.done=1;S.money+=S.dch.r;mfx(S.dch.r);sfx('cash');confetti(10);save()}
+const dchHtml=()=>{dchInit();const d=S.dch,t=DC.find(x=>x[0]==d.c)[1].replace('{n}',fm(d.n));return`<div class=card style="background:#fff3bf"><div class=t>📅 Daily Business Challenge</div><div>${t}</div><div class=bar><i style="width:${dchProg()/d.n*100}%"></i></div><div class=rw><span>${fm(dchProg())}/${fm(d.n)} · Reward $${fm(d.r)}</span><button class="btn g" data-s="cdc" ${!d.done&&dchProg()>=d.n?'':'disabled'}>${d.done?'Claimed ✅':'Claim'}</button></div></div>`};
+function evTick(){EV.t-=1.5;
+if(EV.t<=0){EV.t=120+Math.random()*180;const r=Math.random(),own=[0,1,2,3].filter(s=>S.own[s]),s=own[Math.random()*own.length|0];
+if(r<.45){RUSH=Date.now()+40000;toast('🏃 SHOPPING RUSH! Customers are flooding in!');sfx('notify');confetti(6)}
+else if(r<.75){spawn(s,'v');toast('👑 A VIP customer is on the way!');sfx('notify')}
+else{spawn(s,'g');toast('🎁 A lucky customer is coming — big tip incoming!');sfx('notify')}}
+[[1.5,250],[2,750],[2.5,2000],[3,5000]].forEach(([r,m],i)=>{if(S.rep>=r&&!(S.rm&(1<<i))){S.rm|=1<<i;S.money+=m;mfx(m);toast('⭐ Reputation milestone '+r+'! +$'+fm(m));sfx('level');confetti()}});
+dchInit();if(!S.dch.done&&!S.dch.nf&&dchProg()>=S.dch.n){S.dch.nf=1;note('dch','📅 Daily challenge complete! Claim it in Missions',1000)}}
 /* ---------- START ---------- */
 applyUp();
 function offline(){const el=(Date.now()-S.t)/1000;if(el<0){S.t=Date.now();return null}if(el<120)return null;let sold=0,m0=S.money;
@@ -489,8 +623,10 @@ setTimeout(()=>{$('tap').textContent='👆 TAP TO START';$('tap').classList.add(
 let last=performance.now();
 function loop(now){let dt=Math.min(.05,(now-last)/1000);last=now;const pz=isPaused();TT+=dt;if(pz)dt=0;
 for(let s=0;s<4;s++)if(S.own[s]){spT[s]-=dt;if(spT[s]<=0){spT[s]=spawnEvery()*(.7+Math.random()*.6);if(C.filter(c=>c.s==s).length<5+2*S.up.decor)spawn(s)}}
-stores.forEach(x=>x.ca.reach=0);[...C].forEach(c=>updC(c,dt));mv(pl,plT.x,plT.z,dt,3.4);anim(pl,dt);C.forEach(c=>anim(c,dt));stores.forEach(x=>anim(x.ca,dt));lifeUpd(dt);pets.forEach(a=>petUpd(a,dt));cars.forEach(c=>{c.g.position.x+=c.dir*c.sp*dt;if(c.g.position.x>16)c.g.position.x=-16;if(c.g.position.x<-16)c.g.position.x=16});fxUpd(dt);
-TGx+=(STORES[cur].ox-TGx)*Math.min(1,dt*4);cam.position.set(TGx+14,TG.y+13,TG.z+14);cam.lookAt(TGx,TG.y,TG.z);dl.position.set(TGx+5,12,7);dl.target.position.set(TGx,0,0);ren.render(scene,cam);requestAnimationFrame(loop)}
+stores.forEach(x=>x.ca.reach=0);const cashing=Math.hypot(pl.g.position.x-5,pl.g.position.z+.8)<.9;
+[...C].forEach(c=>updC(c,dt));aucUpd(dt);if(go(pl,plT.x,plT.z,dt,3.4)&&cashing&&!S.up.cashier)pl.ry=-Math.PI/2;
+sepAll();anim(pl,dt);C.forEach(c=>anim(c,dt));stores.forEach(x=>anim(x.ca,dt));lifeUpd(dt);pets.forEach(a=>petUpd(a,dt));carsUpd(dt);fxUpd(dt);
+TGx+=(STORES[cur].ox-TGx)*Math.min(1,dt*4);cam.position.set(TGx+TG.x+14,TG.y+13,TG.z+14);cam.lookAt(TGx+TG.x,TG.y,TG.z);dl.position.set(TGx+5,12,7);dl.target.position.set(TGx,0,0);ren.render(scene,cam);requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 setInterval(refresh,500);setInterval(tick,1500);setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});addEventListener('pagehide',save);
