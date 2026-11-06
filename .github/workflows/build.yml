@@ -33,6 +33,15 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
+      - name: Set app version (every build gets a higher number, so it installs over the old APK)
+        run: |
+          NAME=$(node -p "require('./package.json').version")
+          CODE=$((1000 + ${{ github.run_number }}))
+          sed -i "s/versionCode [0-9]*/versionCode $CODE/; s/versionName \".*\"/versionName \"$NAME\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+          echo "APP_VERSION=$NAME" >> $GITHUB_ENV
+          echo "::notice::Building version $NAME (code $CODE)"
+
       - name: Add AdMob app ID to the Android manifest
         run: |
           sed -i "s#</application>#<meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\"/></application>#" android/app/src/main/AndroidManifest.xml
@@ -67,5 +76,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: dumped-to-billionaire-apk
+          name: dumped-to-billionaire-v${{ env.APP_VERSION }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
