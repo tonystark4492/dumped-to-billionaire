@@ -155,6 +155,8 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
+          # GitHub's download server sometimes hiccups (error 504): try up to 5 times
+          for i in 1 2 3 4 5; do ./gradlew --version && break; echo "Download failed, retrying in 20 seconds ($i/5)"; sleep 20; done
           ./gradlew assembleDebug
 
       - name: Upload test APK
