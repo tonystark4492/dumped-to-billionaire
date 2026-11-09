@@ -1,0 +1,40 @@
+name: Make upload key (run ONCE)
+
+# Creates your Google Play upload key.
+# Before running: add the secret UPLOAD_KEY_PASSWORD (Settings > Secrets and variables > Actions > New repository secret).
+# After running: download the "upload-key" file from this run, add its .txt text as the secret UPLOAD_KEYSTORE_B64,
+# keep upload.jks + your password somewhere safe (Google Drive), then delete this run's artifact.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Create the upload key
+        env:
+          PASS: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          if [ -z "$PASS" ]; then
+            echo "::error::First add the secret UPLOAD_KEY_PASSWORD (at least 6 characters), then run this again."
+            exit 1
+          fi
+          keytool -genkeypair -v -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$PASS" -keypass "$PASS" -dname "CN=Dumped to Billionaire, OU=Games, O=Dumped to Billionaire, C=IN"
+          base64 -w0 upload.jks > UPLOAD_KEYSTORE_B64.txt
+          keytool -list -v -keystore upload.jks -storepass "$PASS" | grep -E "SHA1|SHA256" || true
+
+      - name: Download this (then delete it from the run page)
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-key
+          path: |
+            upload.jks
+            UPLOAD_KEYSTORE_B64.txt
+          retention-days: 1
