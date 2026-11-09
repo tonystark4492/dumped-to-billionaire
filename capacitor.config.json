@@ -1,5 +1,14 @@
 {
   "appId": "com.dumped.billionaire",
   "appName": "Dumped to Billionaire",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable",
+      "hidden": true
+    }
+  },
+  "android": {
+    "backgroundColor": "#120e24"
+  }
 }
